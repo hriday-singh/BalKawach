@@ -1369,6 +1369,10 @@ tr.clickable { cursor: pointer; }
         <input type="password" class="form-input" id="login-password" placeholder="Enter password" autocomplete="current-password"/>
       </div>
       <div id="login-error" style="font-size:0.78rem;color:var(--red);margin-bottom:12px;display:none;"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <input type="checkbox" id="login-2fa-mock" checked style="accent-color:var(--accent);width:16px;height:16px;">
+        <label for="login-2fa-mock" style="font-size:0.75rem;margin:0;cursor:pointer;">Enable 2FA (Prototype Mock)</label>
+      </div>
       <button class="btn btn-primary btn-full" onclick="loginWithCredentials()" id="login-btn">Sign In</button>
     </div>
 
@@ -1413,6 +1417,10 @@ tr.clickable { cursor: pointer; }
     <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
     <div class="nav-links" id="nav-links"></div>
     <div class="nav-right">
+      <div class="offline-indicator" style="display:flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--green);padding:4px 10px;background:rgba(0,255,0,0.1);border-radius:20px;margin-right:12px;">
+        <span style="display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;"></span>
+        Offline Ready
+      </div>
       <div class="nav-user">
         <span class="nav-user-name" id="nav-user-name"></span>
         <span class="role-badge" id="nav-role-badge"></span>
@@ -2509,26 +2517,48 @@ async function viewChild(childId) {
   }
 }
 
+let currentModalChildId = null;
+
 function showUpdateStatusModal(childId) {
-  const status = prompt('Enter new legal status:\n(under_inquiry, care_and_protection, conflict_with_law, restored, adopted, foster_care, aftercare)');
+  currentModalChildId = childId;
+  document.getElementById('modal-update-status').style.display = 'flex';
+}
+
+function closeUpdateStatusModal() {
+  document.getElementById('modal-update-status').style.display = 'none';
+}
+
+function submitUpdateStatus() {
+  const status = document.getElementById('status-select').value;
   if (!status) return;
-  api(`/api/children/${childId}/status`, {
+  api(`/api/children/${currentModalChildId}/status`, {
     method: 'PUT',
     body: JSON.stringify({ legal_status: status }),
   }).then(() => {
     toast('Status updated', 'success');
-    viewChild(childId);
+    closeUpdateStatusModal();
+    viewChild(currentModalChildId);
   }).catch(e => toast(e.message, 'error'));
 }
 
 function showScheduleHearingForChild(childId) {
-  const dateStr = prompt('Enter hearing date (YYYY-MM-DD):');
+  currentModalChildId = childId;
+  document.getElementById('modal-schedule-hearing').style.display = 'flex';
+}
+
+function closeScheduleHearingModal() {
+  document.getElementById('modal-schedule-hearing').style.display = 'none';
+}
+
+function submitScheduleHearing() {
+  const dateStr = document.getElementById('hearing-date-input').value;
   if (!dateStr) return;
   api('/api/hearings', {
     method: 'POST',
-    body: JSON.stringify({ child_id: childId, hearing_date: dateStr }),
+    body: JSON.stringify({ child_id: currentModalChildId, hearing_date: dateStr }),
   }).then(() => {
     toast('Hearing scheduled', 'success');
+    closeScheduleHearingModal();
   }).catch(e => toast(e.message, 'error'));
 }
 
@@ -2662,14 +2692,23 @@ function getHearingStatusTag(status) {
 }
 
 function showScheduleHearingForm() {
-  const childId = prompt('Enter Child ID:');
-  const date = prompt('Enter hearing date (YYYY-MM-DD):');
-  if (!childId || !date) return;
+  document.getElementById('modal-schedule-hearing-global').style.display = 'flex';
+}
+
+function closeScheduleHearingGlobalModal() {
+  document.getElementById('modal-schedule-hearing-global').style.display = 'none';
+}
+
+function submitScheduleHearingGlobal() {
+  const childId = document.getElementById('global-hearing-child-id').value;
+  const dateStr = document.getElementById('global-hearing-date-input').value;
+  if (!childId || !dateStr) return;
   api('/api/hearings', {
     method: 'POST',
-    body: JSON.stringify({ child_id: parseInt(childId), hearing_date: date }),
+    body: JSON.stringify({ child_id: childId, hearing_date: dateStr }),
   }).then(() => {
     toast('Hearing scheduled', 'success');
+    closeScheduleHearingGlobalModal();
     loadHearings();
   }).catch(e => toast(e.message, 'error'));
 }
@@ -3320,6 +3359,69 @@ checkSession();
     </div>
     <div class="modal-actions" style="margin-top:24px;">
       <button class="btn btn-primary" onclick="adminCreateUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Legal Status Modal -->
+<div class="modal" id="modal-update-status">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Update Legal Status</h2>
+      <button class="close-btn" onclick="closeUpdateStatusModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>New Legal Status</label>
+      <select class="form-input" id="status-select">
+        <option value="under_inquiry">Under Inquiry</option>
+        <option value="care_and_protection">Care & Protection</option>
+        <option value="conflict_with_law">Conflict With Law</option>
+        <option value="restored">Restored to Family</option>
+        <option value="foster_care">Foster Care</option>
+        <option value="adopted">Adopted</option>
+        <option value="aftercare">Aftercare</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="submitUpdateStatus()">Update Status</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Hearing Modal -->
+<div class="modal" id="modal-schedule-hearing">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Schedule Hearing</h2>
+      <button class="close-btn" onclick="closeScheduleHearingModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Hearing Date (YYYY-MM-DD)</label>
+      <input type="date" class="form-input" id="hearing-date-input" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="submitScheduleHearing()">Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Hearing (Global) Modal -->
+<div class="modal" id="modal-schedule-hearing-global">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Schedule Hearing</h2>
+      <button class="close-btn" onclick="closeScheduleHearingGlobalModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Child ID</label>
+      <input type="text" class="form-input" id="global-hearing-child-id" placeholder="Enter Child UUID" />
+    </div>
+    <div class="form-group">
+      <label>Hearing Date (YYYY-MM-DD)</label>
+      <input type="date" class="form-input" id="global-hearing-date-input" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="submitScheduleHearingGlobal()">Schedule</button>
     </div>
   </div>
 </div>
