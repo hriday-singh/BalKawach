@@ -188,6 +188,7 @@ CREATE TABLE IF NOT EXISTS hearings (
     transcript_edited   TEXT,
     transcript_language TEXT DEFAULT 'hi',
     notes               TEXT,
+    audio_url           TEXT,
     created_by          TEXT NOT NULL,
     district            TEXT NOT NULL,
     created_at          TEXT DEFAULT (datetime('now')),

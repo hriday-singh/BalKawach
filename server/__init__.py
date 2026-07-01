@@ -36,6 +36,11 @@ def create_app():
             device=DEVICE,
         )
 
+    @app.route("/uploads/<path:filename>")
+    def download_file(filename):
+        from flask import send_from_directory
+        return send_from_directory(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads"), filename)
+
     with app.app_context():
         init_db()
 

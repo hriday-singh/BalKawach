@@ -2875,8 +2875,19 @@ async function openHearingConsole(hearingId) {
   document.getElementById('hearing-transcript-raw').innerHTML = '<span class="transcript-placeholder">Transcription will appear here after processing…</span>';
   document.getElementById('hearing-transcript-edit').value = currentHearing.transcript_edited || '';
   hearingBlob = null;
-  document.getElementById('hearing-audio-preview').style.display = 'none';
-  document.getElementById('hearing-transcribe-btn').disabled = true;
+  const preview = document.getElementById('hearing-audio-preview');
+  const player = document.getElementById('hearing-audio-player');
+  if (currentHearing.audio_url) {
+    player.src = currentHearing.audio_url;
+    preview.style.display = 'block';
+    document.getElementById('hearing-file-info').textContent = 'Saved Recording';
+    document.getElementById('hearing-transcribe-btn').disabled = false;
+  } else {
+    preview.style.display = 'none';
+    player.src = '';
+    document.getElementById('hearing-file-info').textContent = '—';
+    document.getElementById('hearing-transcribe-btn').disabled = true;
+  }
 }
 
 function hearingFileSelect(e) {
@@ -2898,6 +2909,14 @@ function clearHearingAudio() {
 
 let hearingRecTimer = null;
 let hearingRecSeconds = 0;
+let audioCtx = null;
+let mediaStreamSource = null;
+let scriptNode = null;
+let allAudioData = [];
+let chunkAudioData = [];
+let recordingSampleRate = 16000;
+let chunkIntervalId = null;
+let micStream = null;
 
 function updateHearingTimer() {
   hearingRecSeconds++;
@@ -2906,85 +2925,172 @@ function updateHearingTimer() {
   document.getElementById('voice-timer').textContent = `${m}:${s}`;
 }
 
+async function sendAudioChunk() {
+  if (chunkAudioData.length === 0) return;
+  const chunkToProcess = chunkAudioData;
+  chunkAudioData = []; // Reset for next chunk
+  
+  const wavBlob = encodeWAV(chunkToProcess, recordingSampleRate);
+  const formData = new FormData();
+  formData.append('audio', wavBlob, 'chunk.wav');
+  formData.append('language', document.getElementById('hearing-language').value || 'hi');
+  formData.append('decoder', 'rnnt');
+  
+  try {
+    const resp = await fetch('/api/transcribe/chunk', { method: 'POST', body: formData });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.text) {
+        const rawArea = document.getElementById('hearing-transcript-raw');
+        const placeholder = rawArea.querySelector('.transcript-placeholder');
+        if (placeholder) {
+          rawArea.textContent = data.text;
+        } else {
+          rawArea.textContent += (rawArea.textContent ? ' ' : '') + data.text;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Chunk transcribe error', err);
+  }
+}
+
 async function startHearingRecording() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    hearingMediaRecorder = new MediaRecorder(stream);
-    hearingRecChunks = [];
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    // Set up Web Audio API
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: recordingSampleRate });
+    recordingSampleRate = audioCtx.sampleRate; // usually 48000 or 44100 depending on browser
+    mediaStreamSource = audioCtx.createMediaStreamSource(micStream);
+    
+    scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
+    
+    allAudioData = [];
+    chunkAudioData = [];
+    
+    scriptNode.onaudioprocess = (audioProcessingEvent) => {
+      const inputBuffer = audioProcessingEvent.inputBuffer;
+      const inputData = inputBuffer.getChannelData(0);
+      
+      const floatData = new Float32Array(inputData.length);
+      floatData.set(inputData);
+      
+      for (let i=0; i<floatData.length; i++) {
+        allAudioData.push(floatData[i]);
+        chunkAudioData.push(floatData[i]);
+      }
+    };
+    
+    mediaStreamSource.connect(scriptNode);
+    scriptNode.connect(audioCtx.destination);
     
     document.getElementById('audio-default-state').style.display = 'none';
     document.getElementById('voice-recording-state').style.display = 'flex';
     hearingRecSeconds = 0;
     document.getElementById('voice-timer').textContent = '00:00';
     hearingRecTimer = setInterval(updateHearingTimer, 1000);
-
-    hearingMediaRecorder.ondataavailable = async (e) => { 
-      if (e.data.size > 0) {
-        hearingRecChunks.push(e.data);
-        
-        // Immediately POST this chunk
-        const chunkBlob = new Blob([e.data], { type: hearingMediaRecorder.mimeType || 'audio/webm' });
-        const formData = new FormData();
-        formData.append('audio', chunkBlob, 'chunk.webm');
-        formData.append('language', document.getElementById('hearing-language').value || 'hi');
-        formData.append('decoder', 'rnnt');
-        
-        try {
-          const resp = await fetch('/api/transcribe/chunk', { method: 'POST', body: formData });
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.text) {
-              const rawArea = document.getElementById('hearing-transcript-raw');
-              const placeholder = rawArea.querySelector('.transcript-placeholder');
-              if (placeholder) {
-                rawArea.textContent = data.text;
-              } else {
-                rawArea.textContent += (rawArea.textContent ? ' ' : '') + data.text;
-              }
-            }
-          }
-        } catch (err) {
-          console.error('Chunk transcribe error', err);
-        }
-      } 
-    };
-
-    hearingMediaRecorder.onstop = () => {
-      clearInterval(hearingRecTimer);
-      document.getElementById('audio-default-state').style.display = 'block';
-      document.getElementById('voice-recording-state').style.display = 'none';
-      
-      hearingBlob = new Blob(hearingRecChunks, { type: hearingMediaRecorder.mimeType || 'audio/webm' });
-      document.getElementById('hearing-audio-player').src = URL.createObjectURL(hearingBlob);
-      document.getElementById('hearing-audio-preview').style.display = 'block';
-      document.getElementById('hearing-file-info').textContent = `Recording · ${formatSize(hearingBlob.size)}`;
-      document.getElementById('hearing-transcribe-btn').disabled = false;
-    };
     
-    hearingMediaRecorder.start(3000); // chunk every 3 seconds
+    // Send chunk every 3 seconds
+    chunkIntervalId = setInterval(sendAudioChunk, 3000);
+    
   } catch (e) {
     toast('Microphone error: ' + e.message, 'error');
   }
 }
 
-function stopHearingRecording() {
-  if (hearingMediaRecorder && hearingMediaRecorder.state === 'recording') {
-    hearingMediaRecorder.stop();
-    hearingMediaRecorder.stream.getTracks().forEach(t => t.stop());
+async function _cleanupRecording() {
+  if (chunkIntervalId) clearInterval(chunkIntervalId);
+  if (hearingRecTimer) clearInterval(hearingRecTimer);
+  
+  if (scriptNode) {
+    scriptNode.disconnect();
+    scriptNode = null;
+  }
+  if (mediaStreamSource) {
+    mediaStreamSource.disconnect();
+    mediaStreamSource = null;
+  }
+  if (audioCtx) {
+    audioCtx.close();
+    audioCtx = null;
+  }
+  if (micStream) {
+    micStream.getTracks().forEach(t => t.stop());
+    micStream = null;
+  }
+  document.getElementById('audio-default-state').style.display = 'block';
+  document.getElementById('voice-recording-state').style.display = 'none';
+}
+
+async function stopHearingRecording() {
+  if (micStream) {
+    // Send final chunk immediately
+    await sendAudioChunk();
+    
+    // Generate full file
+    hearingBlob = encodeWAV(allAudioData, recordingSampleRate);
+    document.getElementById('hearing-audio-player').src = URL.createObjectURL(hearingBlob);
+    document.getElementById('hearing-audio-preview').style.display = 'block';
+    document.getElementById('hearing-file-info').textContent = `Recording · ${formatSize(hearingBlob.size)}`;
+    document.getElementById('hearing-transcribe-btn').disabled = false;
+    
+    await _cleanupRecording();
+
+    // Upload full file to permanent storage
+    if (currentHearing?.id) {
+      toast('Saving recording permanently...', 'info');
+      const fd = new FormData();
+      fd.append('audio', hearingBlob, `${currentHearing.id}.wav`);
+      try {
+        const resp = await apiForm(`/api/hearings/${currentHearing.id}/audio`, fd);
+        currentHearing = resp; // update hearing data with audio_url
+        toast('Recording saved to hearing', 'success');
+      } catch (e) {
+        toast('Failed to save audio file permanently: ' + e.message, 'error');
+      }
+    }
   }
 }
 
 function cancelHearingRecording() {
-  if (hearingMediaRecorder && hearingMediaRecorder.state === 'recording') {
-    hearingMediaRecorder.onstop = () => {
-      clearInterval(hearingRecTimer);
-      document.getElementById('audio-default-state').style.display = 'block';
-      document.getElementById('voice-recording-state').style.display = 'none';
-    };
-    hearingMediaRecorder.stop();
-    hearingMediaRecorder.stream.getTracks().forEach(t => t.stop());
-    hearingRecChunks = [];
+  if (micStream) {
+    _cleanupRecording();
+    allAudioData = [];
+    chunkAudioData = [];
   }
+}
+
+function encodeWAV(samples, sampleRate) {
+  let buffer = new ArrayBuffer(44 + samples.length * 2);
+  let view = new DataView(buffer);
+  
+  function writeString(view, offset, string) {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  }
+  
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(view, 8, 'WAVE');
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true); 
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+  
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return new Blob([view], { type: 'audio/wav' });
 }
 
 async function transcribeHearing() {

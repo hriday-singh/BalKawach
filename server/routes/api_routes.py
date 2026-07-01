@@ -342,6 +342,48 @@ def update_hearing(hearing_id):
     return jsonify(_row_to_dict(updated))
 
 
+@api_bp.route("/api/hearings/<hearing_id>/audio", methods=["POST"])
+def upload_hearing_audio(hearing_id):
+    """Upload and permanently save the final complete audio recording for a hearing."""
+    user, err = require_login()
+    if err:
+        return err
+
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    file = request.files["audio"]
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+
+    conn = get_db()
+    row = conn.execute("SELECT * FROM hearings WHERE id = ?", (hearing_id,)).fetchone()
+    if row is None:
+        return jsonify({"error": "Hearing not found"}), 404
+
+    # Ensure uploads directory exists
+    import os
+    upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads", "hearings")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    filename = f"{hearing_id}.wav"
+    filepath = os.path.join(upload_dir, filename)
+    file.save(filepath)
+
+    audio_url = f"/uploads/hearings/{filename}"
+
+    conn.execute(
+        "UPDATE hearings SET audio_url = ?, updated_at = ? WHERE id = ?",
+        (audio_url, _now_iso(), hearing_id),
+    )
+    conn.commit()
+
+    audit("UPLOAD_HEARING_AUDIO", f"Audio uploaded for hearing {hearing_id}", "hearing", hearing_id)
+
+    updated = conn.execute("SELECT * FROM hearings WHERE id = ?", (hearing_id,)).fetchone()
+    return jsonify(_row_to_dict(updated))
+
+
 # ════════════════════════════════════════════════════════════════════════
 #  Orders
 # ════════════════════════════════════════════════════════════════════════
