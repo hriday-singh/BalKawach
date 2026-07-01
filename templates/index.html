@@ -2425,7 +2425,7 @@ function renderChildrenTable(data) {
             const statusTag = getStatusTag(c.legal_status);
             const lfaTag = c.lfa_flag ? '<span class="tag tag-amber">LFA</span>' : '<span style="color:var(--muted);">—</span>';
             return `
-              <tr class="clickable" onclick="viewChild(${c.id})">
+              <tr class="clickable" onclick="viewChild('${c.id}')">
                 <td style="font-weight:600;color:var(--accent-light);">${esc(c.child_code || '—')}</td>
                 <td>${esc(c.name || '—')}</td>
                 <td>${c.age ?? c.estimated_age ?? '—'}</td>
@@ -2677,7 +2677,7 @@ function renderHearingsTable() {
               <td>${esc(h.child_name || '—')}</td>
               <td>${getHearingStatusTag(h.status)}</td>
               <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${esc(h.notes || '—')}</td>
-              <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="openHearingConsole(${h.id})">Open Console</button></td>
+              <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="openHearingConsole('${h.id}')">Open Console</button></td>
             </tr>
           `).join('')}
         </tbody>
@@ -2891,8 +2891,8 @@ function renderOrdersTable() {
               <td>${getOrderStatusTag(o.status)}</td>
               <td style="font-size:0.75rem;color:var(--text-secondary);">${formatDate(o.created_at)}</td>
               <td style="display:flex;gap:4px;">
-                <button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="viewOrder(${o.id})">View</button>
-                ${isChair && o.status === 'pending' ? `<button class="btn btn-success" style="padding:4px 10px;font-size:0.72rem;" onclick="approveOrder(${o.id})">Approve</button>` : ''}
+                <button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="viewOrder('${o.id}')">View</button>
+                ${isChair && o.status === 'pending' ? `<button class="btn btn-success" style="padding:4px 10px;font-size:0.72rem;" onclick="approveOrder('${o.id}')">Approve</button>` : ''}
               </td>
             </tr>
           `).join('')}
@@ -3191,7 +3191,10 @@ async function loadSystem() {
     grid.innerHTML = `
       <div class="stat-card">
         <div class="stat-icon">🤖</div>
-        <div class="stat-value" style="font-size:1.1rem;">${model.loaded ? 'Ready' : 'Not Loaded'}</div>
+        <div class="stat-value" style="font-size:1.1rem; display:flex; gap:12px; align-items:center;">
+          ${model.loaded ? 'Ready <span style="color:var(--green)">✔</span>' : 'Not Loaded'}
+          ${!model.loaded ? `<button class="btn btn-primary" onclick="loadModelAdmin()" style="padding: 4px 12px; font-size: 0.8rem;">Load Model</button>` : ''}
+        </div>
         <div class="stat-label">ASR Model</div>
       </div>
       <div class="stat-card">
@@ -3212,6 +3215,23 @@ async function loadSystem() {
     `;
   } catch (e) {
     document.getElementById('system-stats').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Could not load system status</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+async function loadModelAdmin() {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.textContent = 'Loading... (This may take a while)';
+  btn.disabled = true;
+  
+  try {
+    const res = await api('/api/model/load', { method: 'POST' });
+    showToast(res.message || 'Model loaded successfully!', 'success');
+    loadSystem();
+  } catch (e) {
+    showToast(e.message || 'Failed to load model', 'error');
+    btn.textContent = originalText;
+    btn.disabled = false;
   }
 }
 

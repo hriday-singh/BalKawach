@@ -365,6 +365,19 @@ def api_model_status():
         "load_error": MODEL_ERROR,
     })
 
+@app.route("/api/model/load", methods=["POST"])
+def api_model_load():
+    """Manually load the ASR model (Admin action)."""
+    user = _current_user()
+    if not user or user["role"] != "system_admin":
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    model, err = load_model()
+    if err:
+        return jsonify({"error": err}), 500
+    
+    return jsonify({"success": True, "message": "Model loaded successfully!"})
+
 
 @app.route("/api/transcribe", methods=["POST"])
 def api_transcribe():
@@ -1646,4 +1659,9 @@ if __name__ == "__main__":
         print("     Then restart the app.")
         print()
     debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
-    app.run(debug=debug_mode, host="0.0.0.0", port=5000)
+    app.run(
+        debug=debug_mode, 
+        host="0.0.0.0", 
+        port=5000, 
+        exclude_patterns=["*/site-packages/*", "*/site-packages/*/*"]
+    )
