@@ -1286,7 +1286,57 @@ tr.clickable { cursor: pointer; }
   .table-controls .search-input { min-width: 0; }
   .login-card { padding: 24px; }
 }
-  </style>
+    /* Modals */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: modalIn 0.2s ease-out;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .close-btn:hover { color: var(--text); }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+  }
+</style>
 </head>
 <body>
 
@@ -2038,7 +2088,7 @@ async function loginAsUser(userId) {
     try {
       const data = await api('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username: user.username, password: 'password' }),
+        body: JSON.stringify({ username: user.username, password: 'password123' }),
       });
       currentUser = data.user || data;
     } catch {
