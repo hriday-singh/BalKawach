@@ -3025,8 +3025,11 @@ async function _cleanupRecording() {
 
 async function stopHearingRecording() {
   if (micStream) {
-    // Send final chunk immediately
-    await sendAudioChunk();
+    // Immediately stop everything so the UI updates
+    _cleanupRecording();
+    
+    // Send final chunk without blocking
+    sendAudioChunk().catch(e => console.error("Final chunk error:", e));
     
     // Generate full file
     hearingBlob = encodeWAV(allAudioData, recordingSampleRate);
@@ -3034,8 +3037,6 @@ async function stopHearingRecording() {
     document.getElementById('hearing-audio-preview').style.display = 'block';
     document.getElementById('hearing-file-info').textContent = `Recording · ${formatSize(hearingBlob.size)}`;
     document.getElementById('hearing-transcribe-btn').disabled = false;
-    
-    await _cleanupRecording();
 
     // Upload full file to permanent storage
     if (currentHearing?.id) {
