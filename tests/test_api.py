@@ -6,7 +6,7 @@ import unittest
 temp_db_fd, temp_db_path = tempfile.mkstemp()
 
 # 2. Patch db.DB_PATH before app is imported so app uses the temp db
-import db
+from server import db
 db.DB_PATH = temp_db_path
 
 # 3. Import app. It will call db.init_db() on the temp db automatically.
