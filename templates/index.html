@@ -1,0 +1,3150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BalKawach Case Management Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg: hsl(225, 25%, 5%);
+  --surface: hsl(225, 20%, 9%);
+  --input-bg: hsl(225, 18%, 14%);
+  --border: hsl(225, 15%, 18%);
+  --border-hover: hsl(225, 15%, 28%);
+  --text: hsl(225, 20%, 92%);
+  --text-secondary: hsl(225, 15%, 68%);
+  --muted: hsl(225, 15%, 50%);
+  --accent: hsl(230, 70%, 62%);
+  --accent-light: hsl(230, 60%, 72%);
+  --accent-bg: hsl(230, 70%, 62%, 0.1);
+  --green: hsl(142, 71%, 45%);
+  --green-bg: hsl(142, 71%, 45%, 0.1);
+  --amber: hsl(38, 92%, 50%);
+  --amber-bg: hsl(38, 92%, 50%, 0.1);
+  --red: hsl(0, 84%, 60%);
+  --red-bg: hsl(0, 84%, 60%, 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px hsl(225, 25%, 3%, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+a { color: var(--accent-light); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN SCREEN
+   ═══════════════════════════════════════════════════════════════════════════ */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.login-brand .shield {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-bg);
+  border: 1px solid hsl(230, 70%, 62%, 0.2);
+  border-radius: 10px;
+  font-size: 22px;
+}
+
+.login-brand h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.login-brand p {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.login-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--input-bg);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 24px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.login-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.login-tab:hover:not(.active) {
+  color: var(--text-secondary);
+}
+
+.login-form-panel,
+.login-quick-panel {
+  display: none;
+}
+
+.login-form-panel.active,
+.login-quick-panel.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.88rem;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+}
+
+.form-input::placeholder {
+  color: var(--muted);
+}
+
+select.form-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23667'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: hsl(230, 70%, 56%);
+}
+
+.btn-secondary {
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid hsl(0, 84%, 60%, 0.2);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: hsl(0, 84%, 60%, 0.15);
+}
+
+.btn-success {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid hsl(142, 71%, 45%, 0.2);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: hsl(142, 71%, 45%, 0.15);
+}
+
+.btn-full { width: 100%; }
+
+.user-card {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.user-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.user-card .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  border: 1px solid hsl(230, 70%, 62%, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-light);
+  flex-shrink: 0;
+}
+
+.user-card .user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-card .user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.user-card .user-role {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.user-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   APP SHELL (Top Nav + Content)
+   ═══════════════════════════════════════════════════════════════════════════ */
+#app-shell { display: none; min-height: 100vh; }
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.nav-brand .shield {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.nav-brand h1 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  overflow-x: auto;
+  margin: 0 16px;
+  scrollbar-width: none;
+}
+
+.nav-links::-webkit-scrollbar { display: none; }
+
+.nav-link {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-secondary);
+  background: var(--input-bg);
+}
+
+.nav-link.active {
+  color: var(--text);
+  background: var(--input-bg);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: var(--accent-bg);
+  color: var(--accent-light);
+  border: 1px solid hsl(230, 70%, 62%, 0.15);
+}
+
+.btn-logout {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENT AREA
+   ═══════════════════════════════════════════════════════════════════════════ */
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.page.active { display: block; }
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.page-header p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-subtitle {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STAT CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: border-color 0.2s ease;
+}
+
+.stat-card:hover { border-color: var(--border-hover); }
+
+.stat-icon {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 500;
+}
+
+.stat-card.urgency-red .stat-value { color: var(--red); }
+.stat-card.urgency-amber .stat-value { color: var(--amber); }
+.stat-card.urgency-green .stat-value { color: var(--green); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ALERTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.alert-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease;
+  border-left: 3px solid var(--border);
+}
+
+.alert-item:hover { border-color: var(--border-hover); }
+.alert-item.alert-red { border-left-color: var(--red); }
+.alert-item.alert-amber { border-left-color: var(--amber); }
+.alert-item.alert-green { border-left-color: var(--green); }
+
+.alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+.alert-body { flex: 1; min-width: 0; }
+
+.alert-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.alert-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.alert-date {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.table-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.search-input:focus { border-color: var(--accent); }
+
+.filter-select {
+  padding: 8px 32px 8px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23667'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.filter-select:focus { border-color: var(--accent); }
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--input-bg);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid hsl(225, 15%, 12%);
+  white-space: nowrap;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td {
+  background: hsl(225, 20%, 8%);
+}
+
+tr.clickable { cursor: pointer; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATUS TAGS / BADGES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tag-green { background: var(--green-bg); color: var(--green); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
+.tag-red { background: var(--red-bg); color: var(--red); }
+.tag-accent { background: var(--accent-bg); color: var(--accent-light); }
+.tag-muted { background: hsl(225, 15%, 15%); color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIMELINE (Case History)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.timeline-item:last-child { padding-bottom: 0; }
+
+.timeline-dot {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+
+.timeline-date {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.timeline-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.timeline-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.timeline-by {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHILD PROFILE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.profile-card {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  border: 1px solid hsl(230, 70%, 62%, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.profile-info { flex: 1; min-width: 0; }
+
+.profile-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.profile-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.profile-meta span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.profile-meta span strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORMS (Register, Hearing, etc.)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-grid .full-width { grid-column: 1 / -1; }
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEARING CONSOLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.hearing-audio-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.audio-upload-zone {
+  flex: 1;
+  min-width: 200px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.audio-upload-zone:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.audio-upload-zone input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.audio-upload-zone .upload-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+
+.audio-upload-zone p {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.record-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-btn-small {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.rec-btn-small:hover { background: var(--accent-bg); }
+.rec-btn-small.recording { border-color: var(--red); animation: pulse 1.2s infinite; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(0, 84%, 60%, 0.3); }
+  50% { box-shadow: 0 0 0 8px hsl(0, 84%, 60%, 0); }
+}
+
+.transcript-area {
+  margin-top: 16px;
+}
+
+.transcript-display {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 120px;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.transcript-placeholder {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.82rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CCI MONITOR CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cci-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.cci-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: border-color 0.2s ease;
+}
+
+.cci-card:hover { border-color: var(--border-hover); }
+
+.cci-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.cci-district {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.capacity-bar {
+  height: 6px;
+  background: var(--input-bg);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.capacity-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.capacity-fill.low { background: var(--green); }
+.capacity-fill.medium { background: var(--amber); }
+.capacity-fill.high { background: var(--red); }
+
+.cci-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.cci-stats strong { color: var(--text); font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DONUT CHART (CSS-only)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.donut-chart {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center .donut-total {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.donut-center .donut-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-count {
+  color: var(--text);
+  font-weight: 600;
+  margin-left: auto;
+  padding-left: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state .empty-icon {
+  font-size: 2.4rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.empty-state p {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOADING SPINNER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.spinner-sm {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════════════════ */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.25s ease;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show { opacity: 1; transform: translateX(0); }
+
+.toast.success {
+  background: hsl(142, 71%, 20%);
+  color: var(--green);
+  border: 1px solid hsl(142, 71%, 30%);
+}
+
+.toast.error {
+  background: hsl(0, 50%, 15%);
+  color: var(--red);
+  border: 1px solid hsl(0, 50%, 25%);
+}
+
+.toast.info {
+  background: hsl(230, 40%, 18%);
+  color: var(--accent-light);
+  border: 1px solid hsl(230, 40%, 28%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORDER PRINT LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+.print-order {
+  display: none;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .print-order, .print-order * {
+    visibility: visible !important;
+    display: block !important;
+  }
+  .print-order {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    background: #fff;
+    color: #000;
+    padding: 40px;
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 13pt;
+    line-height: 1.6;
+  }
+  .print-order .print-header {
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  .print-order .print-header h1 {
+    font-size: 15pt;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .print-order .print-header h2 {
+    font-size: 12pt;
+    font-weight: normal;
+    margin-top: 4px;
+  }
+  .print-order table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+  .print-order td, .print-order th {
+    border: 1px solid #000;
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 11pt;
+    color: #000;
+    background: #fff;
+  }
+  .print-order .order-body {
+    margin: 20px 0;
+    text-align: justify;
+  }
+  .print-order .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+    page-break-inside: avoid;
+  }
+  .print-order .sig-block {
+    text-align: center;
+    width: 200px;
+  }
+  .print-order .sig-line {
+    border-top: 1px solid #000;
+    padding-top: 4px;
+    font-size: 10pt;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .content { padding: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .profile-card { flex-direction: column; }
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+    z-index: 99;
+  }
+  .mobile-menu-btn { display: block; }
+  .nav-user-name { display: none; }
+  .hearing-audio-section { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .top-nav { padding: 0 12px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .table-controls { flex-direction: column; }
+  .table-controls .search-input { min-width: 0; }
+  .login-card { padding: 24px; }
+}
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+     ════════════════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="shield">🛡️</div>
+      <div>
+        <h1>BalKawach</h1>
+        <p>Case Management Platform</p>
+      </div>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchLoginTab('credentials')">Login</button>
+      <button class="login-tab" onclick="switchLoginTab('quick')">Quick Select</button>
+    </div>
+
+    <div class="login-form-panel active" id="login-credentials">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" class="form-input" id="login-username" placeholder="Enter username" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-input" id="login-password" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <div id="login-error" style="font-size:0.78rem;color:var(--red);margin-bottom:12px;display:none;"></div>
+      <button class="btn btn-primary btn-full" onclick="loginWithCredentials()" id="login-btn">Sign In</button>
+    </div>
+
+    <div class="login-quick-panel" id="login-quick">
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Select a user to sign in as:</p>
+      <div class="user-list" id="user-list">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading users…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     APP SHELL
+     ════════════════════════════════════════════════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- TOP NAV -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span class="shield">🛡️</span>
+      <h1>BalKawach</h1>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+    <div class="nav-links" id="nav-links"></div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <span class="nav-user-name" id="nav-user-name"></span>
+        <span class="role-badge" id="nav-role-badge"></span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content" id="content-area">
+
+    <!-- ═══ DASHBOARD HOME (DCPU) ═══ -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>Overview of child protection metrics in your jurisdiction</p>
+      </div>
+      <div class="stats-grid" id="dashboard-stats">
+        <div class="stat-card"><div class="loading-state"><span class="spinner-sm"></span></div></div>
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:280px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Children by Legal Status</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0;" id="donut-area">
+              <div class="loading-state"><span class="spinner-sm"></span></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:280px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Recent Alerts</div>
+            </div>
+            <div id="dashboard-alerts-preview">
+              <div class="loading-state"><span class="spinner-sm"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ALERTS PANEL ═══ -->
+    <div class="page" id="page-alerts">
+      <div class="page-header">
+        <h2>Alerts</h2>
+        <p>Deadlines, age-out warnings, LFA flags, and contact alerts</p>
+      </div>
+      <div class="table-controls">
+        <select class="filter-select" id="alert-urgency-filter" onchange="renderAlerts()">
+          <option value="">All Urgency</option>
+          <option value="red">Overdue / Critical</option>
+          <option value="amber">Due Soon</option>
+          <option value="green">On Track</option>
+        </select>
+      </div>
+      <div id="alerts-list">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading alerts…</div>
+      </div>
+    </div>
+
+    <!-- ═══ CHILDREN LIST ═══ -->
+    <div class="page" id="page-children">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h2>Children</h2>
+          <p>All registered children in the system</p>
+        </div>
+        <button class="btn btn-primary" onclick="navigateTo('register-child')" id="btn-add-child" style="display:none;">+ Register Child</button>
+      </div>
+      <div class="table-controls">
+        <input type="text" class="search-input" placeholder="Search by name or code…" id="children-search" oninput="filterChildren()"/>
+        <select class="filter-select" id="children-status-filter" onchange="filterChildren()">
+          <option value="">All Statuses</option>
+          <option value="under_inquiry">Under Inquiry</option>
+          <option value="care_and_protection">Care & Protection</option>
+          <option value="conflict_with_law">Conflict with Law</option>
+          <option value="restored">Restored</option>
+          <option value="adopted">Adopted</option>
+          <option value="foster_care">Foster Care</option>
+          <option value="aftercare">Aftercare</option>
+        </select>
+        <select class="filter-select" id="children-category-filter" onchange="filterChildren()">
+          <option value="">All Categories</option>
+          <option value="abandoned">Abandoned</option>
+          <option value="orphan">Orphan</option>
+          <option value="surrendered">Surrendered</option>
+          <option value="missing">Missing</option>
+          <option value="runaway">Runaway</option>
+          <option value="victim_of_abuse">Victim of Abuse</option>
+          <option value="child_labour">Child Labour</option>
+          <option value="street_child">Street Child</option>
+        </select>
+      </div>
+      <div id="children-table-area">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading children…</div>
+      </div>
+    </div>
+
+    <!-- ═══ CHILD DETAIL ═══ -->
+    <div class="page" id="page-child-detail">
+      <div style="margin-bottom:16px;">
+        <button class="btn btn-secondary" onclick="navigateTo('children')">← Back to List</button>
+      </div>
+      <div id="child-profile-area">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading child details…</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Case History</div>
+        </div>
+        <div id="child-timeline">
+          <div class="loading-state"><span class="spinner-sm"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REGISTER CHILD ═══ -->
+    <div class="page" id="page-register-child">
+      <div class="page-header">
+        <h2>Register New Child</h2>
+        <p>Add a child to the case management system</p>
+      </div>
+      <div class="card">
+        <form id="register-child-form" onsubmit="submitChildForm(event)">
+          <div class="form-section">
+            <div class="form-section-title">Personal Information</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" class="form-input" name="name" required placeholder="Child's full name"/>
+              </div>
+              <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" class="form-input" name="date_of_birth"/>
+              </div>
+              <div class="form-group">
+                <label>Estimated Age (if DOB unknown)</label>
+                <input type="number" class="form-input" name="estimated_age" min="0" max="18" placeholder="Years"/>
+              </div>
+              <div class="form-group">
+                <label>Gender *</label>
+                <select class="form-input" name="gender" required>
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Admission Details</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Admission Date *</label>
+                <input type="date" class="form-input" name="admission_date" required/>
+              </div>
+              <div class="form-group">
+                <label>Category *</label>
+                <select class="form-input" name="admission_category" required>
+                  <option value="">Select category</option>
+                  <option value="abandoned">Abandoned</option>
+                  <option value="orphan">Orphan</option>
+                  <option value="surrendered">Surrendered</option>
+                  <option value="missing">Missing</option>
+                  <option value="runaway">Runaway</option>
+                  <option value="victim_of_abuse">Victim of Abuse</option>
+                  <option value="child_labour">Child Labour</option>
+                  <option value="street_child">Street Child</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>CCI</label>
+                <select class="form-input" name="cci_id" id="register-cci-select">
+                  <option value="">Loading…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Legal Status</label>
+                <select class="form-input" name="legal_status">
+                  <option value="under_inquiry">Under Inquiry</option>
+                  <option value="care_and_protection">Care & Protection</option>
+                  <option value="conflict_with_law">Conflict with Law</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Additional Information</div>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Physical Description</label>
+                <textarea class="form-input" name="physical_description" rows="3" placeholder="Identifying features, approximate height, complexion…"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="navigateTo('children')">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="register-submit-btn">Register Child</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ═══ FAMILY VISIT LOG ═══ -->
+    <div class="page" id="page-visits">
+      <div class="page-header">
+        <h2>Family Visit Log</h2>
+        <p>Record and track family visits to children in care</p>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-title">Log a New Visit</div>
+        </div>
+        <form id="visit-form" onsubmit="submitVisitForm(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Child *</label>
+              <select class="form-input" name="child_id" id="visit-child-select" required>
+                <option value="">Select child</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Visit Date *</label>
+              <input type="date" class="form-input" name="visit_date" required/>
+            </div>
+            <div class="form-group">
+              <label>Visitor Name *</label>
+              <input type="text" class="form-input" name="visitor_name" required placeholder="Visitor's full name"/>
+            </div>
+            <div class="form-group">
+              <label>Relationship</label>
+              <input type="text" class="form-input" name="relationship" placeholder="e.g. Mother, Uncle"/>
+            </div>
+            <div class="form-group">
+              <label>Duration (minutes)</label>
+              <input type="number" class="form-input" name="duration_minutes" min="1" placeholder="30"/>
+            </div>
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea class="form-input" name="notes" rows="2" placeholder="Observations…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Log Visit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ═══ HEARINGS ═══ -->
+    <div class="page" id="page-hearings">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h2>Hearings / Sittings</h2>
+          <p>Schedule and manage CWC hearings</p>
+        </div>
+        <button class="btn btn-primary" onclick="showScheduleHearingForm()">+ Schedule Hearing</button>
+      </div>
+      <div class="table-controls">
+        <select class="filter-select" id="hearing-status-filter" onchange="loadHearings()">
+          <option value="">All Statuses</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="adjourned">Adjourned</option>
+        </select>
+      </div>
+      <div id="hearings-table-area">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading hearings…</div>
+      </div>
+    </div>
+
+    <!-- ═══ HEARING CONSOLE ═══ -->
+    <div class="page" id="page-hearing-console">
+      <div style="margin-bottom:16px;">
+        <button class="btn btn-secondary" onclick="navigateTo('hearings')">← Back to Hearings</button>
+      </div>
+      <div class="page-header">
+        <h2>Hearing Console</h2>
+        <p id="hearing-console-info">Transcribe and document hearing proceedings</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Audio Input</div>
+        </div>
+        <div class="hearing-audio-section">
+          <div class="audio-upload-zone" id="hearing-drop-zone">
+            <input type="file" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a,.webm,.opus" onchange="hearingFileSelect(event)"/>
+            <div class="upload-icon">📁</div>
+            <p>Drop audio file here or click to browse</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:0.78rem;">
+            <span>— OR —</span>
+            <div class="record-section">
+              <button class="rec-btn-small" id="hearing-rec-btn" onclick="toggleHearingRecording()">🎙️</button>
+              <span id="hearing-rec-status" style="font-size:0.75rem;color:var(--muted);">Record</span>
+            </div>
+          </div>
+        </div>
+        <div id="hearing-audio-preview" style="display:none;margin-top:8px;">
+          <audio id="hearing-audio-player" controls style="width:100%;border-radius:8px;"></audio>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+            <span style="font-size:0.78rem;color:var(--text-secondary);" id="hearing-file-info">—</span>
+            <button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="clearHearingAudio()">Remove</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0;">
+            <label>Language</label>
+            <select class="form-input" id="hearing-language">
+              {% for code, name in languages.items() %}
+              <option value="{{ code }}" {% if code == 'hi' %}selected{% endif %}>{{ name }} ({{ code }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-primary" id="hearing-transcribe-btn" onclick="transcribeHearing()" disabled>
+            <span class="spinner-sm" id="hearing-spinner" style="display:none;"></span>
+            Transcribe
+          </button>
+        </div>
+      </div>
+
+      <div class="card transcript-area">
+        <div class="card-header">
+          <div class="card-title">Transcription</div>
+        </div>
+        <div class="transcript-display" id="hearing-transcript-raw">
+          <span class="transcript-placeholder">Transcription will appear here after processing…</span>
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label>Editable Transcript</label>
+          <textarea class="form-input" id="hearing-transcript-edit" rows="6" placeholder="Edit the transcription as needed…"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="saveHearingTranscript()">Save Transcript</button>
+          <button class="btn btn-primary" onclick="generateOrder()" id="generate-order-btn">Generate Order</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ORDERS ═══ -->
+    <div class="page" id="page-orders">
+      <div class="page-header">
+        <h2>Orders</h2>
+        <p>Manage CWC orders and approvals</p>
+      </div>
+      <div id="orders-table-area">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading orders…</div>
+      </div>
+    </div>
+
+    <!-- ═══ ORDER DETAIL ═══ -->
+    <div class="page" id="page-order-detail">
+      <div style="margin-bottom:16px;display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="navigateTo('orders')">← Back to Orders</button>
+        <button class="btn btn-secondary" onclick="printOrder()">🖨️ Print Order</button>
+      </div>
+      <div id="order-detail-content">
+        <div class="loading-state"><span class="spinner-sm"></span></div>
+      </div>
+    </div>
+
+    <!-- ═══ CCI MONITOR ═══ -->
+    <div class="page" id="page-cci-monitor">
+      <div class="page-header">
+        <h2>CCI Monitor</h2>
+        <p>Track capacity, occupancy, and inspections across childcare institutions</p>
+      </div>
+      <div class="cci-grid" id="cci-grid">
+        <div class="loading-state" style="grid-column:1/-1;"><span class="spinner-sm"></span> Loading CCIs…</div>
+      </div>
+    </div>
+
+    <!-- ═══ REPORTS ═══ -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <h2>Reports</h2>
+        <p>Monthly and quarterly statistical reports</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Report Parameters</div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Month</label>
+            <select class="form-input" id="report-month">
+              <option value="1">January</option><option value="2">February</option>
+              <option value="3">March</option><option value="4">April</option>
+              <option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option>
+              <option value="9">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Year</label>
+            <input type="number" class="form-input" id="report-year" value="2026" min="2020" max="2030"/>
+          </div>
+          <button class="btn btn-primary" onclick="loadReport()">Generate Report</button>
+        </div>
+      </div>
+      <div id="report-content" style="margin-top:16px;">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          <h3>Select parameters and generate</h3>
+          <p>Choose a month and year to view the report</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DISTRICT SUMMARY (WCD) ═══ -->
+    <div class="page" id="page-district-summary">
+      <div class="page-header">
+        <h2>District Summary</h2>
+        <p>High-level statistics across all districts</p>
+      </div>
+      <div class="stats-grid" id="district-stats">
+        <div class="loading-state" style="grid-column:1/-1;"><span class="spinner-sm"></span></div>
+      </div>
+    </div>
+
+    <!-- ═══ AUDIT LOG ═══ -->
+    <div class="page" id="page-audit">
+      <div class="page-header">
+        <h2>Audit Log</h2>
+        <p>System activity and change history</p>
+      </div>
+      <div class="table-controls">
+        <input type="text" class="search-input" placeholder="Search audit log…" id="audit-search" oninput="filterAudit()"/>
+      </div>
+      <div id="audit-table-area">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading audit log…</div>
+      </div>
+    </div>
+
+    <!-- ═══ USER MANAGEMENT (Admin) ═══ -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <h2>User Management</h2>
+        <p>Manage system users and roles</p>
+      </div>
+      <div id="users-table-area">
+        <div class="loading-state"><span class="spinner-sm"></span> Loading users…</div>
+      </div>
+    </div>
+
+    <!-- ═══ SYSTEM STATUS (Admin) ═══ -->
+    <div class="page" id="page-system">
+      <div class="page-header">
+        <h2>System Status</h2>
+        <p>ASR model and database status</p>
+      </div>
+      <div class="stats-grid" id="system-stats">
+        <div class="loading-state" style="grid-column:1/-1;"><span class="spinner-sm"></span></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app-shell -->
+
+<!-- PRINT ORDER (hidden, used for @media print) -->
+<div class="print-order" id="print-order-area"></div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+let currentUser = null;
+let currentPage = 'dashboard';
+let childrenData = [];
+let alertsData = [];
+let hearingsData = [];
+let ordersData = [];
+let ccisData = [];
+let auditData = [];
+let usersData = [];
+let currentChild = null;
+let currentHearing = null;
+let currentOrder = null;
+let hearingBlob = null;
+let hearingMediaRecorder = null;
+let hearingRecChunks = [];
+
+const LANG_MAP = {
+  {% for code, name in languages.items() %}"{{ code }}": "{{ name }}",
+  {% endfor %}
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROLE CONFIGURATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+const ROLE_NAV = {
+  cci_staff: [
+    { id: 'children', label: 'Children' },
+    { id: 'register-child', label: 'Register' },
+    { id: 'visits', label: 'Visit Log' },
+  ],
+  cwc_member: [
+    { id: 'children', label: 'All Children' },
+    { id: 'hearings', label: 'Hearings' },
+  ],
+  cwc_chairperson: [
+    { id: 'children', label: 'All Children' },
+    { id: 'hearings', label: 'Hearings' },
+    { id: 'orders', label: 'Orders' },
+  ],
+  dcpu_officer: [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'alerts', label: 'Alerts' },
+    { id: 'cci-monitor', label: 'CCI Monitor' },
+    { id: 'children', label: 'All Children' },
+    { id: 'reports', label: 'Reports' },
+  ],
+  wcd_official: [
+    { id: 'district-summary', label: 'District Summary' },
+    { id: 'reports', label: 'Reports' },
+    { id: 'audit', label: 'Audit Log' },
+  ],
+  system_admin: [
+    { id: 'users', label: 'Users' },
+    { id: 'audit', label: 'Audit Log' },
+    { id: 'system', label: 'System Status' },
+  ],
+};
+
+const ROLE_LABELS = {
+  cci_staff: 'CCI Staff',
+  cwc_member: 'CWC Member',
+  cwc_chairperson: 'CWC Chairperson',
+  dcpu_officer: 'DCPU Officer',
+  wcd_official: 'WCD Official',
+  system_admin: 'System Admin',
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   API HELPERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function api(url, options = {}) {
+  try {
+    const resp = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: resp.statusText }));
+      throw new Error(err.error || err.message || resp.statusText);
+    }
+    return await resp.json();
+  } catch (e) {
+    throw e;
+  }
+}
+
+async function apiForm(url, formData) {
+  const resp = await fetch(url, { method: 'POST', body: formData });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || err.message || resp.statusText);
+  }
+  return await resp.json();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════════════════ */
+function toast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${esc(message)}</span>`;
+  container.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 250);
+  }, 3000);
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN
+   ═══════════════════════════════════════════════════════════════════════════ */
+function switchLoginTab(tab) {
+  document.querySelectorAll('.login-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === (tab === 'credentials' ? 0 : 1));
+  });
+  document.getElementById('login-credentials').classList.toggle('active', tab === 'credentials');
+  document.getElementById('login-quick').classList.toggle('active', tab === 'quick');
+  if (tab === 'quick') loadUserList();
+}
+
+async function loadUserList() {
+  try {
+    const users = await api('/api/auth/users');
+    const container = document.getElementById('user-list');
+    if (!users || users.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><h3>No users found</h3></div>';
+      return;
+    }
+    container.innerHTML = users.map(u => `
+      <div class="user-card" onclick="loginAsUser(${u.id})">
+        <div class="avatar">${(u.full_name || u.username || '?')[0].toUpperCase()}</div>
+        <div class="user-info">
+          <div class="user-name">${esc(u.full_name || u.username)}</div>
+          <div class="user-role">${ROLE_LABELS[u.role] || u.role}</div>
+        </div>
+        <span class="tag tag-accent">${(u.role || '').replace(/_/g, ' ')}</span>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('user-list').innerHTML = `<div class="empty-state"><h3>Could not load users</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+async function loginWithCredentials() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!username) { errEl.textContent = 'Username is required'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    currentUser = data.user || data;
+    enterApp();
+  } catch (e) {
+    errEl.textContent = e.message || 'Login failed';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+async function loginAsUser(userId) {
+  try {
+    const users = await api('/api/auth/users');
+    const user = users.find(u => u.id === userId);
+    if (!user) throw new Error('User not found');
+    // Try login with username and default password
+    try {
+      const data = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: user.username, password: 'password' }),
+      });
+      currentUser = data.user || data;
+    } catch {
+      // Fallback: just use the user data directly
+      currentUser = user;
+    }
+    enterApp();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loginWithCredentials();
+});
+
+async function checkSession() {
+  try {
+    const data = await api('/api/auth/me');
+    if (data && (data.id || data.username)) {
+      currentUser = data;
+      enterApp();
+    }
+  } catch { /* not logged in */ }
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENTER APP
+   ═══════════════════════════════════════════════════════════════════════════ */
+function enterApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+
+  // Update nav
+  document.getElementById('nav-user-name').textContent = currentUser.full_name || currentUser.username || '';
+  document.getElementById('nav-role-badge').textContent = ROLE_LABELS[currentUser.role] || currentUser.role;
+
+  // Build nav links
+  const navItems = ROLE_NAV[currentUser.role] || ROLE_NAV.cci_staff;
+  const navEl = document.getElementById('nav-links');
+  navEl.innerHTML = navItems.map(n => `
+    <button class="nav-link" data-page="${n.id}" onclick="navigateTo('${n.id}')">${n.label}</button>
+  `).join('');
+
+  // Show add-child button only for CCI staff
+  const addBtn = document.getElementById('btn-add-child');
+  if (addBtn) addBtn.style.display = ['cci_staff', 'cwc_member', 'cwc_chairperson', 'dcpu_officer'].includes(currentUser.role) ? '' : 'none';
+
+  // Navigate to first page
+  const firstPage = navItems[0]?.id || 'children';
+  navigateTo(firstPage);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+function navigateTo(pageId) {
+  currentPage = pageId;
+
+  // Update nav active state
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.dataset.page === pageId);
+  });
+
+  // Show/hide pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + pageId);
+  if (page) page.classList.add('active');
+
+  // Close mobile menu
+  document.getElementById('nav-links').classList.remove('open');
+
+  // Load data for page
+  loadPageData(pageId);
+}
+
+function toggleMobileMenu() {
+  document.getElementById('nav-links').classList.toggle('open');
+}
+
+async function loadPageData(pageId) {
+  switch (pageId) {
+    case 'dashboard': loadDashboard(); break;
+    case 'alerts': loadAlerts(); break;
+    case 'children': loadChildren(); break;
+    case 'register-child': loadCCIs(); break;
+    case 'visits': loadVisitsPage(); break;
+    case 'hearings': loadHearings(); break;
+    case 'orders': loadOrders(); break;
+    case 'cci-monitor': loadCCIMonitor(); break;
+    case 'reports': break;
+    case 'district-summary': loadDistrictSummary(); break;
+    case 'audit': loadAudit(); break;
+    case 'users': loadUsers(); break;
+    case 'system': loadSystem(); break;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD (DCPU)
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const stats = await api('/api/dashboard/stats');
+    const grid = document.getElementById('dashboard-stats');
+    grid.innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon">👶</div>
+        <div class="stat-value">${stats.total_children ?? '—'}</div>
+        <div class="stat-label">Total Children</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value">${stats.under_inquiry ?? '—'}</div>
+        <div class="stat-label">Under Inquiry</div>
+      </div>
+      <div class="stat-card urgency-amber">
+        <div class="stat-icon">📝</div>
+        <div class="stat-value">${stats.lfa_eligible ?? '—'}</div>
+        <div class="stat-label">LFA Eligible</div>
+      </div>
+      <div class="stat-card urgency-red">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value">${stats.overdue_deadlines ?? '—'}</div>
+        <div class="stat-label">Overdue Deadlines</div>
+      </div>
+      <div class="stat-card urgency-amber">
+        <div class="stat-icon">🎂</div>
+        <div class="stat-value">${stats.age_out_alerts ?? '—'}</div>
+        <div class="stat-label">Age-Out Alerts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👨‍👩‍👦</div>
+        <div class="stat-value">${stats.no_family_contact ?? '—'}</div>
+        <div class="stat-label">No Family Contact</div>
+      </div>
+    `;
+
+    // Donut chart
+    const statusData = stats.by_legal_status || {};
+    renderDonut(statusData, stats.total_children || 0);
+
+  } catch (e) {
+    document.getElementById('dashboard-stats').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Could not load dashboard</h3><p>${esc(e.message)}</p></div>`;
+  }
+
+  // Load alerts preview
+  try {
+    const alerts = await api('/api/dashboard/alerts');
+    alertsData = alerts || [];
+    const preview = document.getElementById('dashboard-alerts-preview');
+    if (alertsData.length === 0) {
+      preview.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><h3>No active alerts</h3></div>';
+    } else {
+      preview.innerHTML = alertsData.slice(0, 5).map(a => renderAlertItem(a)).join('');
+    }
+  } catch (e) {
+    document.getElementById('dashboard-alerts-preview').innerHTML = '<div class="empty-state"><h3>Could not load alerts</h3></div>';
+  }
+}
+
+function renderDonut(statusData, total) {
+  const area = document.getElementById('donut-area');
+  const colors = {
+    under_inquiry: 'var(--accent)',
+    care_and_protection: 'var(--amber)',
+    conflict_with_law: 'var(--red)',
+    restored: 'var(--green)',
+    adopted: 'hsl(280, 60%, 55%)',
+    foster_care: 'hsl(180, 50%, 50%)',
+    aftercare: 'hsl(40, 60%, 55%)',
+  };
+  const labels = {
+    under_inquiry: 'Under Inquiry',
+    care_and_protection: 'Care & Protection',
+    conflict_with_law: 'Conflict with Law',
+    restored: 'Restored',
+    adopted: 'Adopted',
+    foster_care: 'Foster Care',
+    aftercare: 'Aftercare',
+  };
+
+  const entries = Object.entries(statusData).filter(([,v]) => v > 0);
+  if (entries.length === 0 || total === 0) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><h3>No data available</h3></div>';
+    return;
+  }
+
+  let gradient = '';
+  let cumPct = 0;
+  const segments = [];
+  entries.forEach(([status, count]) => {
+    const pct = (count / total) * 100;
+    const color = colors[status] || 'var(--muted)';
+    segments.push(`${color} ${cumPct}% ${cumPct + pct}%`);
+    cumPct += pct;
+  });
+  gradient = `conic-gradient(${segments.join(', ')})`;
+
+  const legendHtml = entries.map(([status, count]) => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${colors[status] || 'var(--muted)'}"></span>
+      <span>${labels[status] || status.replace(/_/g, ' ')}</span>
+      <span class="legend-count">${count}</span>
+    </div>
+  `).join('');
+
+  area.innerHTML = `
+    <div class="donut-chart" style="background:${gradient};">
+      <div class="donut-center">
+        <span class="donut-total">${total}</span>
+        <span class="donut-label">Total</span>
+      </div>
+    </div>
+    <div class="donut-legend">${legendHtml}</div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ALERTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadAlerts() {
+  try {
+    const [alerts, deadlines] = await Promise.all([
+      api('/api/dashboard/alerts'),
+      api('/api/dashboard/deadlines').catch(() => []),
+    ]);
+    alertsData = [...(alerts || []), ...(deadlines || [])];
+    renderAlerts();
+  } catch (e) {
+    document.getElementById('alerts-list').innerHTML = `<div class="empty-state"><h3>Could not load alerts</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderAlerts() {
+  const filter = document.getElementById('alert-urgency-filter')?.value || '';
+  let items = alertsData;
+  if (filter) items = items.filter(a => getAlertUrgency(a) === filter);
+
+  const list = document.getElementById('alerts-list');
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><h3>No alerts</h3><p>All cases are on track</p></div>';
+    return;
+  }
+  list.innerHTML = items.map(a => renderAlertItem(a)).join('');
+}
+
+function getAlertUrgency(alert) {
+  if (alert.urgency) return alert.urgency;
+  const t = (alert.type || alert.alert_type || '').toLowerCase();
+  if (t.includes('overdue') || t.includes('critical')) return 'red';
+  if (t.includes('due') || t.includes('warning') || t.includes('age_out') || t.includes('lfa')) return 'amber';
+  return 'green';
+}
+
+function renderAlertItem(a) {
+  const urgency = getAlertUrgency(a);
+  const icons = { red: '🔴', amber: '🟡', green: '🟢' };
+  return `
+    <div class="alert-item alert-${urgency}">
+      <span class="alert-icon">${icons[urgency] || '📌'}</span>
+      <div class="alert-body">
+        <div class="alert-title">${esc(a.title || a.type || 'Alert')}</div>
+        <div class="alert-desc">${esc(a.description || a.message || '')}</div>
+        <div class="alert-date">${a.date || a.created_at || ''}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHILDREN
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadChildren() {
+  try {
+    const params = new URLSearchParams();
+    if (currentUser.cci_id) params.set('cci_id', currentUser.cci_id);
+    childrenData = await api('/api/children?' + params.toString());
+    if (!Array.isArray(childrenData)) childrenData = childrenData.children || [];
+    renderChildrenTable(childrenData);
+  } catch (e) {
+    document.getElementById('children-table-area').innerHTML = `<div class="empty-state"><h3>Could not load children</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function filterChildren() {
+  const search = (document.getElementById('children-search')?.value || '').toLowerCase();
+  const status = document.getElementById('children-status-filter')?.value || '';
+  const cat = document.getElementById('children-category-filter')?.value || '';
+
+  let filtered = childrenData;
+  if (search) filtered = filtered.filter(c =>
+    (c.name || '').toLowerCase().includes(search) ||
+    (c.child_code || '').toLowerCase().includes(search)
+  );
+  if (status) filtered = filtered.filter(c => c.legal_status === status);
+  if (cat) filtered = filtered.filter(c => c.admission_category === cat);
+
+  renderChildrenTable(filtered);
+}
+
+function renderChildrenTable(data) {
+  const area = document.getElementById('children-table-area');
+  if (!data || data.length === 0) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">👶</div><h3>No children found</h3><p>Try adjusting your filters or register a new child</p></div>';
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th><th>Name</th><th>Age</th><th>CCI</th><th>Admitted</th>
+            <th>Category</th><th>Legal Status</th><th>LFA</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(c => {
+            const statusTag = getStatusTag(c.legal_status);
+            const lfaTag = c.lfa_flag ? '<span class="tag tag-amber">LFA</span>' : '<span style="color:var(--muted);">—</span>';
+            return `
+              <tr class="clickable" onclick="viewChild(${c.id})">
+                <td style="font-weight:600;color:var(--accent-light);">${esc(c.child_code || '—')}</td>
+                <td>${esc(c.name || '—')}</td>
+                <td>${c.age ?? c.estimated_age ?? '—'}</td>
+                <td style="font-size:0.75rem;color:var(--text-secondary);">${esc(c.cci_name || '—')}</td>
+                <td style="font-size:0.75rem;color:var(--text-secondary);">${formatDate(c.admission_date)}</td>
+                <td><span class="tag tag-muted">${esc((c.admission_category || '—').replace(/_/g, ' '))}</span></td>
+                <td>${statusTag}</td>
+                <td>${lfaTag}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function getStatusTag(status) {
+  const map = {
+    under_inquiry: 'tag-accent',
+    care_and_protection: 'tag-amber',
+    conflict_with_law: 'tag-red',
+    restored: 'tag-green',
+    adopted: 'tag-green',
+    foster_care: 'tag-accent',
+    aftercare: 'tag-muted',
+  };
+  const cls = map[status] || 'tag-muted';
+  return `<span class="tag ${cls}">${esc((status || '—').replace(/_/g, ' '))}</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHILD DETAIL
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function viewChild(childId) {
+  navigateTo('child-detail');
+  try {
+    const child = await api(`/api/children/${childId}`);
+    currentChild = child;
+    const profileArea = document.getElementById('child-profile-area');
+    profileArea.innerHTML = `
+      <div class="profile-card">
+        <div class="profile-avatar">👶</div>
+        <div class="profile-info">
+          <div class="profile-name">${esc(child.name || '—')}</div>
+          <div class="profile-meta">
+            <span><strong>Code:</strong> ${esc(child.child_code || '—')}</span>
+            <span><strong>Age:</strong> ${child.age ?? child.estimated_age ?? '—'}</span>
+            <span><strong>Gender:</strong> ${esc(child.gender || '—')}</span>
+            <span><strong>CCI:</strong> ${esc(child.cci_name || '—')}</span>
+            <span><strong>Admitted:</strong> ${formatDate(child.admission_date)}</span>
+          </div>
+          <div style="margin-top:8px;">
+            ${getStatusTag(child.legal_status)}
+            ${child.lfa_flag ? '<span class="tag tag-amber" style="margin-left:6px;">LFA Eligible</span>' : ''}
+          </div>
+          <div class="profile-actions">
+            <button class="btn btn-secondary" onclick="showUpdateStatusModal(${child.id})">Update Status</button>
+            <button class="btn btn-secondary" onclick="showScheduleHearingForChild(${child.id})">Schedule Hearing</button>
+            <button class="btn btn-secondary" onclick="showLogVisitForChild(${child.id})">Log Visit</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Load history
+    const history = await api(`/api/children/${childId}/history`);
+    const timelineEl = document.getElementById('child-timeline');
+    if (!history || history.length === 0) {
+      timelineEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><h3>No case history yet</h3></div>';
+    } else {
+      const events = Array.isArray(history) ? history : (history.events || []);
+      timelineEl.innerHTML = `
+        <div class="timeline">
+          ${events.map(e => `
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-date">${formatDate(e.date || e.created_at)}</div>
+              <div class="timeline-title">${esc(e.event_type || e.type || 'Event')}</div>
+              <div class="timeline-desc">${esc(e.description || '')}</div>
+              ${e.performed_by ? `<div class="timeline-by">by ${esc(e.performed_by)}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  } catch (e) {
+    document.getElementById('child-profile-area').innerHTML = `<div class="empty-state"><h3>Could not load child details</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function showUpdateStatusModal(childId) {
+  const status = prompt('Enter new legal status:\n(under_inquiry, care_and_protection, conflict_with_law, restored, adopted, foster_care, aftercare)');
+  if (!status) return;
+  api(`/api/children/${childId}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ legal_status: status }),
+  }).then(() => {
+    toast('Status updated', 'success');
+    viewChild(childId);
+  }).catch(e => toast(e.message, 'error'));
+}
+
+function showScheduleHearingForChild(childId) {
+  const dateStr = prompt('Enter hearing date (YYYY-MM-DD):');
+  if (!dateStr) return;
+  api('/api/hearings', {
+    method: 'POST',
+    body: JSON.stringify({ child_id: childId, hearing_date: dateStr }),
+  }).then(() => {
+    toast('Hearing scheduled', 'success');
+  }).catch(e => toast(e.message, 'error'));
+}
+
+function showLogVisitForChild(childId) {
+  navigateTo('visits');
+  setTimeout(() => {
+    const sel = document.getElementById('visit-child-select');
+    if (sel) sel.value = childId;
+  }, 500);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REGISTER CHILD
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadCCIs() {
+  try {
+    ccisData = await api('/api/ccis');
+    if (!Array.isArray(ccisData)) ccisData = ccisData.ccis || [];
+    const sel = document.getElementById('register-cci-select');
+    sel.innerHTML = '<option value="">Select CCI</option>' + ccisData.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+    // Auto-select for CCI staff
+    if (currentUser.cci_id) sel.value = currentUser.cci_id;
+  } catch { /* ignore */ }
+}
+
+async function submitChildForm(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form));
+  // Clean empty values
+  Object.keys(data).forEach(k => { if (!data[k]) delete data[k]; });
+  if (data.estimated_age) data.estimated_age = parseInt(data.estimated_age);
+  if (data.cci_id) data.cci_id = parseInt(data.cci_id);
+
+  const btn = document.getElementById('register-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Registering…';
+
+  try {
+    await api('/api/children', { method: 'POST', body: JSON.stringify(data) });
+    toast('Child registered successfully', 'success');
+    form.reset();
+    navigateTo('children');
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Register Child';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VISITS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadVisitsPage() {
+  try {
+    if (childrenData.length === 0) {
+      const params = new URLSearchParams();
+      if (currentUser.cci_id) params.set('cci_id', currentUser.cci_id);
+      childrenData = await api('/api/children?' + params.toString());
+      if (!Array.isArray(childrenData)) childrenData = childrenData.children || [];
+    }
+    const sel = document.getElementById('visit-child-select');
+    sel.innerHTML = '<option value="">Select child</option>' + childrenData.map(c => `<option value="${c.id}">${esc(c.name)} (${esc(c.child_code || '')})</option>`).join('');
+  } catch { /* ignore */ }
+}
+
+async function submitVisitForm(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form));
+  const childId = data.child_id;
+  delete data.child_id;
+  if (data.duration_minutes) data.duration_minutes = parseInt(data.duration_minutes);
+
+  try {
+    await api(`/api/children/${childId}/visits`, { method: 'POST', body: JSON.stringify(data) });
+    toast('Visit logged successfully', 'success');
+    form.reset();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEARINGS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadHearings() {
+  try {
+    const params = new URLSearchParams();
+    const status = document.getElementById('hearing-status-filter')?.value;
+    if (status) params.set('status', status);
+    if (currentUser.district) params.set('district', currentUser.district);
+    hearingsData = await api('/api/hearings?' + params.toString());
+    if (!Array.isArray(hearingsData)) hearingsData = hearingsData.hearings || [];
+    renderHearingsTable();
+  } catch (e) {
+    document.getElementById('hearings-table-area').innerHTML = `<div class="empty-state"><h3>Could not load hearings</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderHearingsTable() {
+  const area = document.getElementById('hearings-table-area');
+  if (hearingsData.length === 0) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div><h3>No hearings scheduled</h3><p>Schedule a new hearing to get started</p></div>';
+    return;
+  }
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Child</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${hearingsData.map(h => `
+            <tr>
+              <td style="font-weight:600;">${formatDate(h.hearing_date)}</td>
+              <td>${esc(h.child_name || '—')}</td>
+              <td>${getHearingStatusTag(h.status)}</td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${esc(h.notes || '—')}</td>
+              <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="openHearingConsole(${h.id})">Open Console</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function getHearingStatusTag(status) {
+  const map = { scheduled: 'tag-accent', in_progress: 'tag-amber', completed: 'tag-green', adjourned: 'tag-muted' };
+  return `<span class="tag ${map[status] || 'tag-muted'}">${esc((status || '—').replace(/_/g, ' '))}</span>`;
+}
+
+function showScheduleHearingForm() {
+  const childId = prompt('Enter Child ID:');
+  const date = prompt('Enter hearing date (YYYY-MM-DD):');
+  if (!childId || !date) return;
+  api('/api/hearings', {
+    method: 'POST',
+    body: JSON.stringify({ child_id: parseInt(childId), hearing_date: date }),
+  }).then(() => {
+    toast('Hearing scheduled', 'success');
+    loadHearings();
+  }).catch(e => toast(e.message, 'error'));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEARING CONSOLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function openHearingConsole(hearingId) {
+  currentHearing = hearingsData.find(h => h.id === hearingId) || { id: hearingId };
+  navigateTo('hearing-console');
+  document.getElementById('hearing-console-info').textContent =
+    `Hearing for ${currentHearing.child_name || 'Child'} on ${formatDate(currentHearing.hearing_date)}`;
+  document.getElementById('hearing-transcript-raw').innerHTML = '<span class="transcript-placeholder">Transcription will appear here after processing…</span>';
+  document.getElementById('hearing-transcript-edit').value = currentHearing.transcript_edited || '';
+  hearingBlob = null;
+  document.getElementById('hearing-audio-preview').style.display = 'none';
+  document.getElementById('hearing-transcribe-btn').disabled = true;
+}
+
+function hearingFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  hearingBlob = file;
+  document.getElementById('hearing-audio-player').src = URL.createObjectURL(file);
+  document.getElementById('hearing-audio-preview').style.display = 'block';
+  document.getElementById('hearing-file-info').textContent = `${file.name} · ${formatSize(file.size)}`;
+  document.getElementById('hearing-transcribe-btn').disabled = false;
+}
+
+function clearHearingAudio() {
+  hearingBlob = null;
+  document.getElementById('hearing-audio-preview').style.display = 'none';
+  document.getElementById('hearing-audio-player').src = '';
+  document.getElementById('hearing-transcribe-btn').disabled = true;
+}
+
+async function toggleHearingRecording() {
+  const btn = document.getElementById('hearing-rec-btn');
+  const statusEl = document.getElementById('hearing-rec-status');
+
+  if (hearingMediaRecorder && hearingMediaRecorder.state === 'recording') {
+    hearingMediaRecorder.stop();
+    hearingMediaRecorder.stream.getTracks().forEach(t => t.stop());
+    btn.classList.remove('recording');
+    btn.textContent = '🎙️';
+    statusEl.textContent = 'Done';
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    hearingMediaRecorder = new MediaRecorder(stream);
+    hearingRecChunks = [];
+    hearingMediaRecorder.ondataavailable = e => { if (e.data.size > 0) hearingRecChunks.push(e.data); };
+    hearingMediaRecorder.onstop = () => {
+      hearingBlob = new Blob(hearingRecChunks, { type: hearingMediaRecorder.mimeType || 'audio/webm' });
+      document.getElementById('hearing-audio-player').src = URL.createObjectURL(hearingBlob);
+      document.getElementById('hearing-audio-preview').style.display = 'block';
+      document.getElementById('hearing-file-info').textContent = `Recording · ${formatSize(hearingBlob.size)}`;
+      document.getElementById('hearing-transcribe-btn').disabled = false;
+    };
+    hearingMediaRecorder.start(100);
+    btn.classList.add('recording');
+    btn.textContent = '⏹️';
+    statusEl.textContent = 'Recording…';
+  } catch (e) {
+    toast('Microphone error: ' + e.message, 'error');
+  }
+}
+
+async function transcribeHearing() {
+  if (!hearingBlob) { toast('No audio to transcribe', 'error'); return; }
+
+  const btn = document.getElementById('hearing-transcribe-btn');
+  const spinner = document.getElementById('hearing-spinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+
+  const lang = document.getElementById('hearing-language').value;
+  const fd = new FormData();
+  fd.append('audio', hearingBlob, 'audio.webm');
+  fd.append('language', lang);
+
+  try {
+    // Try hearing-specific endpoint first, then fallback to generic transcribe
+    let result;
+    try {
+      if (currentHearing?.id) {
+        result = await apiForm(`/api/hearings/${currentHearing.id}/transcribe`, fd);
+      } else {
+        result = await apiForm('/api/transcribe', fd);
+      }
+    } catch {
+      result = await apiForm('/api/transcribe', fd);
+    }
+
+    const text = result.transcript || result.text || result.transcription || result.rnnt || result.ctc || JSON.stringify(result);
+    document.getElementById('hearing-transcript-raw').textContent = text;
+    document.getElementById('hearing-transcript-edit').value = text;
+    toast('Transcription complete', 'success');
+  } catch (e) {
+    toast('Transcription failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+async function saveHearingTranscript() {
+  if (!currentHearing?.id) { toast('No hearing selected', 'error'); return; }
+  const editedText = document.getElementById('hearing-transcript-edit').value;
+  try {
+    await api(`/api/hearings/${currentHearing.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ transcript_edited: editedText, status: 'completed' }),
+    });
+    toast('Transcript saved', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function generateOrder() {
+  if (!currentHearing?.id) { toast('No hearing selected', 'error'); return; }
+  const btn = document.getElementById('generate-order-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const editedText = document.getElementById('hearing-transcript-edit').value;
+    const result = await api('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify({
+        child_id: currentHearing.child_id,
+        hearing_id: currentHearing.id,
+        order_type: 'cwc_order',
+        order_body: editedText,
+        findings: 'Generated from hearing transcript',
+      }),
+    });
+    toast('Order generated', 'success');
+    navigateTo('orders');
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate Order';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORDERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadOrders() {
+  try {
+    ordersData = await api('/api/orders');
+    if (!Array.isArray(ordersData)) ordersData = ordersData.orders || [];
+    renderOrdersTable();
+  } catch (e) {
+    document.getElementById('orders-table-area').innerHTML = `<div class="empty-state"><h3>Could not load orders</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderOrdersTable() {
+  const area = document.getElementById('orders-table-area');
+  if (ordersData.length === 0) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">📜</div><h3>No orders yet</h3><p>Orders will appear here after being generated from hearings</p></div>';
+    return;
+  }
+  const isChair = currentUser.role === 'cwc_chairperson';
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Order #</th><th>Child</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${ordersData.map(o => `
+            <tr>
+              <td style="font-weight:600;">${esc(o.order_number || o.id || '—')}</td>
+              <td>${esc(o.child_name || '—')}</td>
+              <td>${esc((o.order_type || '—').replace(/_/g, ' '))}</td>
+              <td>${getOrderStatusTag(o.status)}</td>
+              <td style="font-size:0.75rem;color:var(--text-secondary);">${formatDate(o.created_at)}</td>
+              <td style="display:flex;gap:4px;">
+                <button class="btn btn-secondary" style="padding:4px 10px;font-size:0.72rem;" onclick="viewOrder(${o.id})">View</button>
+                ${isChair && o.status === 'pending' ? `<button class="btn btn-success" style="padding:4px 10px;font-size:0.72rem;" onclick="approveOrder(${o.id})">Approve</button>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function getOrderStatusTag(status) {
+  const map = { draft: 'tag-muted', pending: 'tag-amber', approved: 'tag-green', rejected: 'tag-red' };
+  return `<span class="tag ${map[status] || 'tag-muted'}">${esc((status || 'draft').replace(/_/g, ' '))}</span>`;
+}
+
+async function viewOrder(orderId) {
+  navigateTo('order-detail');
+  try {
+    const order = ordersData.find(o => o.id === orderId) || await api(`/api/orders/${orderId}`);
+    currentOrder = order;
+    const content = document.getElementById('order-detail-content');
+    const isChair = currentUser.role === 'cwc_chairperson';
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Order ${esc(order.order_number || '#' + order.id)}</div>
+            <div class="card-subtitle">${esc((order.order_type || '').replace(/_/g, ' '))} · ${formatDate(order.created_at)}</div>
+          </div>
+          ${getOrderStatusTag(order.status)}
+        </div>
+        <div style="margin-bottom:16px;">
+          <strong style="font-size:0.78rem;color:var(--text-secondary);">Child:</strong>
+          <span style="font-size:0.88rem;">${esc(order.child_name || '—')}</span>
+        </div>
+        ${order.findings ? `<div style="margin-bottom:16px;"><strong style="font-size:0.78rem;color:var(--text-secondary);">Findings:</strong><p style="font-size:0.85rem;margin-top:4px;color:var(--text-secondary);">${esc(order.findings)}</p></div>` : ''}
+        <div>
+          <strong style="font-size:0.78rem;color:var(--text-secondary);">Order Body:</strong>
+          <div style="margin-top:8px;padding:16px;background:var(--input-bg);border-radius:var(--radius);font-size:0.85rem;line-height:1.7;white-space:pre-wrap;">${esc(order.order_body || '—')}</div>
+        </div>
+        ${isChair && order.status === 'pending' ? `
+          <div style="display:flex;gap:8px;margin-top:20px;">
+            <button class="btn btn-success" onclick="approveOrder(${order.id})">✓ Approve Order</button>
+            <button class="btn btn-danger" onclick="rejectOrder(${order.id})">✕ Reject Order</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById('order-detail-content').innerHTML = `<div class="empty-state"><h3>Could not load order</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+async function approveOrder(orderId) {
+  try {
+    await api(`/api/orders/${orderId}/approve`, { method: 'PUT' });
+    toast('Order approved', 'success');
+    loadOrders();
+    if (currentPage === 'order-detail') navigateTo('orders');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function rejectOrder(orderId) {
+  const reason = prompt('Reason for rejection:');
+  if (reason === null) return;
+  try {
+    await api(`/api/orders/${orderId}/approve`, {
+      method: 'PUT',
+      body: JSON.stringify({ approved: false, reason }),
+    });
+    toast('Order rejected', 'success');
+    loadOrders();
+    if (currentPage === 'order-detail') navigateTo('orders');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function printOrder() {
+  if (!currentOrder) return;
+  const area = document.getElementById('print-order-area');
+  area.innerHTML = `
+    <div class="print-header">
+      <h1>Before the Child Welfare Committee</h1>
+      <h2>${esc(currentUser.district || 'District')}</h2>
+    </div>
+    <table>
+      <tr><td><strong>Order Number</strong></td><td>${esc(currentOrder.order_number || '#' + currentOrder.id)}</td></tr>
+      <tr><td><strong>Date</strong></td><td>${formatDate(currentOrder.created_at)}</td></tr>
+      <tr><td><strong>Child Name</strong></td><td>${esc(currentOrder.child_name || '—')}</td></tr>
+      <tr><td><strong>Order Type</strong></td><td>${esc((currentOrder.order_type || '').replace(/_/g, ' '))}</td></tr>
+      <tr><td><strong>Status</strong></td><td>${esc((currentOrder.status || '').replace(/_/g, ' '))}</td></tr>
+    </table>
+    ${currentOrder.findings ? `<h3>Findings</h3><p>${esc(currentOrder.findings)}</p>` : ''}
+    <h3>Order</h3>
+    <div class="order-body">${esc(currentOrder.order_body || '')}</div>
+    <div class="signatures">
+      <div class="sig-block"><div class="sig-line">Member, CWC</div></div>
+      <div class="sig-block"><div class="sig-line">Chairperson, CWC</div></div>
+    </div>
+  `;
+  setTimeout(() => window.print(), 200);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CCI MONITOR
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadCCIMonitor() {
+  try {
+    ccisData = await api('/api/ccis');
+    if (!Array.isArray(ccisData)) ccisData = ccisData.ccis || [];
+    renderCCIGrid();
+  } catch (e) {
+    document.getElementById('cci-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Could not load CCIs</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderCCIGrid() {
+  const grid = document.getElementById('cci-grid');
+  if (ccisData.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🏠</div><h3>No CCIs found</h3></div>';
+    return;
+  }
+  grid.innerHTML = ccisData.map(c => {
+    const capacity = c.capacity || 50;
+    const occupancy = c.current_occupancy || c.occupancy || 0;
+    const pct = Math.min(100, Math.round((occupancy / capacity) * 100));
+    const fill = pct > 85 ? 'high' : pct > 60 ? 'medium' : 'low';
+    return `
+      <div class="cci-card">
+        <div class="cci-name">${esc(c.name)}</div>
+        <div class="cci-district">${esc(c.district || '—')}</div>
+        <div class="capacity-bar"><div class="capacity-fill ${fill}" style="width:${pct}%"></div></div>
+        <div class="cci-stats">
+          <span>Capacity: <strong>${capacity}</strong></span>
+          <span>Occupancy: <strong>${occupancy}</strong> (${pct}%)</span>
+        </div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-bottom:12px;">
+          Last Inspection: ${formatDate(c.last_inspection) || '—'}
+        </div>
+        <button class="btn btn-secondary" style="width:100%;font-size:0.75rem;" onclick="navigateTo('children')">View Children</button>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REPORTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadReport() {
+  const month = document.getElementById('report-month').value;
+  const year = document.getElementById('report-year').value;
+  const container = document.getElementById('report-content');
+  container.innerHTML = '<div class="loading-state"><span class="spinner-sm"></span> Generating report…</div>';
+
+  try {
+    const data = await api(`/api/reports/monthly?month=${month}&year=${year}`);
+    const stats = data.stats || data;
+    container.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Monthly Report — ${getMonthName(parseInt(month))} ${year}</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Metric</th><th>Count</th></tr></thead>
+            <tbody>
+              ${Object.entries(stats).map(([k, v]) => `
+                <tr><td>${esc(k.replace(/_/g, ' '))}</td><td style="font-weight:600;">${typeof v === 'object' ? JSON.stringify(v) : v}</td></tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state"><h3>Could not generate report</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DISTRICT SUMMARY (WCD)
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadDistrictSummary() {
+  try {
+    const stats = await api('/api/dashboard/stats');
+    const grid = document.getElementById('district-stats');
+    grid.innerHTML = `
+      <div class="stat-card"><div class="stat-icon">👶</div><div class="stat-value">${stats.total_children ?? '—'}</div><div class="stat-label">Total Children</div></div>
+      <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-value">${stats.total_ccis ?? '—'}</div><div class="stat-label">Total CCIs</div></div>
+      <div class="stat-card urgency-red"><div class="stat-icon">⚠️</div><div class="stat-value">${stats.overdue_deadlines ?? '—'}</div><div class="stat-label">Overdue Cases</div></div>
+      <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-value">${stats.pending_orders ?? '—'}</div><div class="stat-label">Pending Orders</div></div>
+    `;
+  } catch (e) {
+    document.getElementById('district-stats').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Could not load summary</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUDIT LOG
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadAudit() {
+  try {
+    auditData = await api('/api/audit');
+    if (!Array.isArray(auditData)) auditData = auditData.entries || auditData.logs || [];
+    renderAuditTable(auditData);
+  } catch (e) {
+    document.getElementById('audit-table-area').innerHTML = `<div class="empty-state"><h3>Could not load audit log</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function filterAudit() {
+  const q = (document.getElementById('audit-search')?.value || '').toLowerCase();
+  const filtered = q ? auditData.filter(a =>
+    JSON.stringify(a).toLowerCase().includes(q)
+  ) : auditData;
+  renderAuditTable(filtered);
+}
+
+function renderAuditTable(data) {
+  const area = document.getElementById('audit-table-area');
+  if (!data || data.length === 0) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><h3>No audit entries</h3></div>';
+    return;
+  }
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th><th>IP</th></tr></thead>
+        <tbody>
+          ${data.slice(0, 100).map(a => `
+            <tr>
+              <td style="font-size:0.72rem;color:var(--text-secondary);white-space:nowrap;">${formatDateTime(a.timestamp || a.created_at)}</td>
+              <td>${esc(a.user || a.username || '—')}</td>
+              <td><span class="tag tag-accent">${esc(a.action || '—')}</span></td>
+              <td>${esc(a.entity || a.entity_type || '—')}</td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:0.75rem;color:var(--text-secondary);">${esc(a.details || '—')}</td>
+              <td style="font-size:0.72rem;color:var(--muted);">${esc(a.ip || a.ip_address || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   USER MANAGEMENT (Admin)
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadUsers() {
+  try {
+    usersData = await api('/api/auth/users');
+    if (!Array.isArray(usersData)) usersData = [];
+    renderUsersTable();
+  } catch (e) {
+    document.getElementById('users-table-area').innerHTML = `<div class="empty-state"><h3>Could not load users</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderUsersTable() {
+  const area = document.getElementById('users-table-area');
+  if (usersData.length === 0) {
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><h3>No users found</h3></div>';
+    return;
+  }
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>District</th><th>CCI</th></tr></thead>
+        <tbody>
+          ${usersData.map(u => `
+            <tr>
+              <td style="font-weight:600;">${esc(u.username || '—')}</td>
+              <td>${esc(u.full_name || '—')}</td>
+              <td>${getStatusTag(u.role)}</td>
+              <td style="font-size:0.75rem;color:var(--text-secondary);">${esc(u.district || '—')}</td>
+              <td style="font-size:0.75rem;color:var(--text-secondary);">${esc(u.cci_name || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SYSTEM STATUS (Admin)
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadSystem() {
+  try {
+    const [model, langs] = await Promise.all([
+      api('/api/model-status').catch(() => ({})),
+      api('/api/languages').catch(() => ({})),
+    ]);
+    const grid = document.getElementById('system-stats');
+    grid.innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon">🤖</div>
+        <div class="stat-value" style="font-size:1.1rem;">${model.loaded ? 'Ready' : 'Not Loaded'}</div>
+        <div class="stat-label">ASR Model</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value" style="font-size:1.1rem;">${esc('{{ device }}')}</div>
+        <div class="stat-label">Compute Device</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌐</div>
+        <div class="stat-value" style="font-size:1.1rem;">${Object.keys(langs || LANG_MAP).length}</div>
+        <div class="stat-label">Languages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔐</div>
+        <div class="stat-value" style="font-size:1.1rem;">${model.token_set ? 'Set' : 'Missing'}</div>
+        <div class="stat-label">HF Token</div>
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById('system-stats').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>Could not load system status</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY FUNCTIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch { return dateStr; }
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch { return dateStr; }
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function getMonthName(m) {
+  return ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m] || '';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INITIALIZE
+   ═══════════════════════════════════════════════════════════════════════════ */
+// Set report month to current
+const now = new Date();
+const reportMonth = document.getElementById('report-month');
+if (reportMonth) reportMonth.value = now.getMonth() + 1;
+const reportYear = document.getElementById('report-year');
+if (reportYear) reportYear.value = now.getFullYear();
+
+// Check session
+checkSession();
+
+</script>
+</body>
+</html>
