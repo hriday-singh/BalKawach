@@ -22,6 +22,8 @@ import librosa
 from transformers import AutoModel
 
 import db
+from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
 
 # ════════════════════════════════════════════════════════════════════════
 #  App initialisation
@@ -94,7 +96,10 @@ def load_model():
 
     try:
         print(f"Loading model : {MODEL_PATH}")
-        print(f"Device        : {DEVICE}")
+        if DEVICE == "cuda":
+            print("Device        : GPU (CUDA) IS ACTIVE 🚀")
+        else:
+            print("Device        : CPU (WARNING: Inference will be slow) 🐢")
         print(f"HF token set  : {'yes' if HF_TOKEN else 'NO — gated repos will fail'}")
 
         MODEL = AutoModel.from_pretrained(
@@ -387,12 +392,14 @@ def auth_login():
     if user is None:
         return jsonify({"error": "Invalid credentials"}), 401
 
-    # Prototype: plain-text password comparison
-    if user["password"] != password:
+    if not check_password_hash(user["password_hash"], password):
         return jsonify({"error": "Invalid credentials"}), 401
+        
+    if user["is_active"] == 0:
+        return jsonify({"error": "Account pending admin approval"}), 403
 
     user_dict = _row_to_dict(user)
-    user_dict.pop("password", None)
+    user_dict.pop("password_hash", None)
     session["user"] = user_dict
 
     _audit("LOGIN", f"User {username} logged in", "user", user_dict["id"])
@@ -400,12 +407,41 @@ def auth_login():
     return jsonify({"message": "Login successful", "user": user_dict})
 
 
+@app.route("/api/auth/register", methods=["POST"])
+def auth_register():
+    """Public registration endpoint (creates pending user)."""
+    data = request.get_json(silent=True) or {}
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+    full_name = data.get("full_name", "").strip()
+    role = data.get("role", "cci_staff")
+    district = data.get("district", "Hyderabad")
+    
+    if not username or not password or not full_name:
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    conn = db.get_db()
+    existing = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    if existing:
+        return jsonify({"error": "Username already exists"}), 400
+        
+    user_id = str(uuid.uuid4())
+    pw_hash = generate_password_hash(password)
+    
+    conn.execute(
+        "INSERT INTO users (id, username, password_hash, full_name, role, district, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (user_id, username, pw_hash, full_name, role, district, 0)
+    )
+    conn.commit()
+    return jsonify({"message": "Registration successful. Pending admin approval."}), 201
+
+
 @app.route("/api/auth/logout", methods=["POST"])
 def auth_logout():
     """Clear the current session."""
     user = _current_user()
     if user:
-        _audit("LOGOUT", f"User {user['name']} logged out", "user", user["id"])
+        _audit("LOGOUT", f"User {user['full_name']} logged out", "user", user["id"])
     session.clear()
     return jsonify({"message": "Logged out"})
 
@@ -419,14 +455,62 @@ def auth_me():
     return jsonify(user)
 
 
-@app.route("/api/auth/users")
+@app.route("/api/auth/users", methods=["GET"])
 def auth_users():
-    """List all users (for the prototype role-switcher)."""
+    """List all users."""
     conn = db.get_db()
     rows = conn.execute(
-        "SELECT id, username, name, role, district FROM users"
+        "SELECT id, username, full_name as name, role, district, is_active FROM users"
     ).fetchall()
     return jsonify(_rows_to_list(rows))
+
+
+@app.route("/api/auth/users", methods=["POST"])
+def admin_create_user():
+    """Admin endpoint to create an instantly active user."""
+    user = _current_user()
+    if not user or user["role"] != "system_admin":
+        return jsonify({"error": "Unauthorized"}), 403
+        
+    data = request.get_json(silent=True) or {}
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+    full_name = data.get("full_name", "").strip()
+    role = data.get("role", "cci_staff")
+    district = data.get("district", "Hyderabad")
+    
+    if not username or not password or not full_name:
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    conn = db.get_db()
+    existing = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    if existing:
+        return jsonify({"error": "Username already exists"}), 400
+        
+    user_id = str(uuid.uuid4())
+    pw_hash = generate_password_hash(password)
+    
+    conn.execute(
+        "INSERT INTO users (id, username, password_hash, full_name, role, district, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (user_id, username, pw_hash, full_name, role, district, 1)
+    )
+    conn.commit()
+    _audit("CREATE_USER", f"Admin created user {username}", "user", user_id)
+    return jsonify({"message": "User created successfully"}), 201
+
+
+@app.route("/api/auth/users/<user_id>/approve", methods=["PUT"])
+def admin_approve_user(user_id):
+    """Admin endpoint to approve a pending user."""
+    user = _current_user()
+    if not user or user["role"] != "system_admin":
+        return jsonify({"error": "Unauthorized"}), 403
+        
+    conn = db.get_db()
+    conn.execute("UPDATE users SET is_active = 1 WHERE id = ?", (user_id,))
+    conn.commit()
+    _audit("APPROVE_USER", f"Admin approved user ID {user_id}", "user", user_id)
+    return jsonify({"message": "User approved successfully"})
 
 
 # ════════════════════════════════════════════════════════════════════════

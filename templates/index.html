@@ -1304,8 +1304,9 @@ tr.clickable { cursor: pointer; }
     </div>
 
     <div class="login-tabs">
-      <button class="login-tab active" onclick="switchLoginTab('credentials')">Login</button>
-      <button class="login-tab" onclick="switchLoginTab('quick')">Quick Select</button>
+      <button class="login-tab active" onclick="switchLoginTab('credentials')" id="tab-credentials">Login</button>
+      <button class="login-tab" onclick="switchLoginTab('register')" id="tab-register">Register</button>
+      <button class="login-tab" onclick="switchLoginTab('quick')" id="tab-quick">Quick Select</button>
     </div>
 
     <div class="login-form-panel active" id="login-credentials">
@@ -1321,7 +1322,25 @@ tr.clickable { cursor: pointer; }
       <button class="btn btn-primary btn-full" onclick="loginWithCredentials()" id="login-btn">Sign In</button>
     </div>
 
-    <div class="login-quick-panel" id="login-quick">
+    <div class="login-form-panel" id="login-register" style="display: none;">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="John Doe"/>
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" class="form-input" id="reg-username" placeholder="johndoe"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-input" id="reg-password" placeholder="Create a password"/>
+      </div>
+      <div id="reg-error" style="font-size:0.78rem;color:var(--red);margin-bottom:12px;display:none;"></div>
+      <div id="reg-success" style="font-size:0.78rem;color:var(--green);margin-bottom:12px;display:none;"></div>
+      <button class="btn btn-primary btn-full" onclick="registerUser()" id="reg-btn">Sign Up</button>
+    </div>
+
+    <div class="login-quick-panel" id="login-quick" style="display: none;">
       <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Select a user to sign in as:</p>
       <div class="user-list" id="user-list">
         <div class="loading-state"><span class="spinner-sm"></span> Loading users…</div>
@@ -1949,11 +1968,13 @@ function esc(str) {
    LOGIN
    ═══════════════════════════════════════════════════════════════════════════ */
 function switchLoginTab(tab) {
-  document.querySelectorAll('.login-tab').forEach((t, i) => {
-    t.classList.toggle('active', i === (tab === 'credentials' ? 0 : 1));
-  });
-  document.getElementById('login-credentials').classList.toggle('active', tab === 'credentials');
-  document.getElementById('login-quick').classList.toggle('active', tab === 'quick');
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  
+  document.getElementById('login-credentials').style.display = tab === 'credentials' ? 'block' : 'none';
+  document.getElementById('login-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('login-quick').style.display = tab === 'quick' ? 'block' : 'none';
+  
   if (tab === 'quick') loadUserList();
 }
 
@@ -3048,15 +3069,18 @@ function renderUsersTable() {
   area.innerHTML = `
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>District</th><th>CCI</th></tr></thead>
+        <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>District</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
           ${usersData.map(u => `
             <tr>
               <td style="font-weight:600;">${esc(u.username || '—')}</td>
-              <td>${esc(u.full_name || '—')}</td>
+              <td>${esc(u.name || u.full_name || '—')}</td>
               <td>${getStatusTag(u.role)}</td>
               <td style="font-size:0.75rem;color:var(--text-secondary);">${esc(u.district || '—')}</td>
-              <td style="font-size:0.75rem;color:var(--text-secondary);">${esc(u.cci_name || '—')}</td>
+              <td>${u.is_active === 1 ? '<span class="status-badge status-completed">Active</span>' : '<span class="status-badge status-pending">Pending</span>'}</td>
+              <td>
+                 ${u.is_active === 0 ? `<button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="approveUser('${u.id}')">Approve</button>` : '—'}
+              </td>
             </tr>
           `).join('')}
         </tbody>
@@ -3142,9 +3166,113 @@ if (reportMonth) reportMonth.value = now.getMonth() + 1;
 const reportYear = document.getElementById('report-year');
 if (reportYear) reportYear.value = now.getFullYear();
 
+// Auth & Admin JS Functions
+async function registerUser() {
+  const username = document.getElementById('reg-username').value;
+  const full_name = document.getElementById('reg-name').value;
+  const password = document.getElementById('reg-password').value;
+  const errEl = document.getElementById('reg-error');
+  const sucEl = document.getElementById('reg-success');
+  
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+  
+  try {
+    const res = await api('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, full_name, password })
+    });
+    sucEl.textContent = 'Registration successful! Pending Admin Approval.';
+    sucEl.style.display = 'block';
+    setTimeout(() => switchLoginTab('credentials'), 2500);
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function approveUser(id) {
+  try {
+    await api('/api/auth/users/' + id + '/approve', { method: 'PUT' });
+    alert('User approved successfully.');
+    loadUsers();
+  } catch (e) {
+    alert('Error approving user: ' + e.message);
+  }
+}
+
+function showAdminAddUserModal() {
+  document.getElementById('modal-admin-user').style.display = 'flex';
+}
+
+function closeAdminAddUserModal() {
+  document.getElementById('modal-admin-user').style.display = 'none';
+}
+
+async function adminCreateUser() {
+  const username = document.getElementById('admin-user-username').value;
+  const full_name = document.getElementById('admin-user-name').value;
+  const password = document.getElementById('admin-user-password').value;
+  const role = document.getElementById('admin-user-role').value;
+  const district = document.getElementById('admin-user-district').value;
+  
+  try {
+    await api('/api/auth/users', {
+      method: 'POST',
+      body: JSON.stringify({ username, full_name, password, role, district })
+    });
+    alert('User created successfully.');
+    closeAdminAddUserModal();
+    loadUsers();
+  } catch (e) {
+    alert('Error creating user: ' + e.message);
+  }
+}
+
 // Check session
 checkSession();
 
 </script>
+
+<!-- Admin Create User Modal -->
+<div class="modal" id="modal-admin-user">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Create New User</h2>
+      <button class="close-btn" onclick="closeAdminAddUserModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" class="form-input" id="admin-user-name" />
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" class="form-input" id="admin-user-username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" class="form-input" id="admin-user-password" />
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select class="form-input" id="admin-user-role">
+        <option value="cci_staff">CCI Staff</option>
+        <option value="cwc_member">CWC Member</option>
+        <option value="cwc_chairperson">CWC Chairperson</option>
+        <option value="dcpu_officer">DCPU Officer</option>
+        <option value="wcd_official">WCD Official</option>
+        <option value="system_admin">System Admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>District</label>
+      <input type="text" class="form-input" id="admin-user-district" value="Hyderabad" />
+    </div>
+    <div class="modal-actions" style="margin-top:24px;">
+      <button class="btn btn-primary" onclick="adminCreateUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
