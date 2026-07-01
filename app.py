@@ -201,10 +201,22 @@ def transcribe_audio(audio_path: str, language: str = "hi",
         selected_decoders = ["ctc", "rnnt"] if decoder == "both" else [decoder]
 
         results = {}
-        with torch.no_grad():
-            for dec in selected_decoders:
-                output = model(wav, language, dec)
-                results[dec] = clean_output(output)
+        
+        # Optimize for speed: use inference_mode (faster than no_grad) and autocast (mixed precision)
+        autocast_device = "cuda" if DEVICE == "cuda" else "cpu"
+        # Use bfloat16 on CPU if supported, else autocast gracefully ignores or uses bfloat16 (requires newer CPUs). 
+        # For maximum safety on diverse hardware, we'll use float16 on CUDA, and disable autocast on CPU.
+        
+        with torch.inference_mode():
+            if DEVICE == "cuda":
+                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                    for dec in selected_decoders:
+                        output = model(wav, language, dec)
+                        results[dec] = clean_output(output)
+            else:
+                for dec in selected_decoders:
+                    output = model(wav, language, dec)
+                    results[dec] = clean_output(output)
 
         response = {
             "language":      language,
