@@ -10,6 +10,9 @@ import uuid
 import traceback
 from pathlib import Path
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
 
 from flask import (
     Flask, request, jsonify, render_template, session
@@ -102,11 +105,22 @@ def load_model():
             print("Device        : CPU (WARNING: Inference will be slow) 🐢")
         print(f"HF token set  : {'yes' if HF_TOKEN else 'NO — gated repos will fail'}")
 
-        MODEL = AutoModel.from_pretrained(
-            MODEL_PATH,
-            trust_remote_code=True,
-            token=HF_TOKEN,
-        )
+        try:
+            print("Checking for locally downloaded model...")
+            MODEL = AutoModel.from_pretrained(
+                MODEL_PATH,
+                trust_remote_code=True,
+                token=HF_TOKEN,
+                local_files_only=True,
+            )
+            print("Loaded model from local cache.")
+        except Exception:
+            print("Model not found locally. Downloading (this may take a while)...")
+            MODEL = AutoModel.from_pretrained(
+                MODEL_PATH,
+                trust_remote_code=True,
+                token=HF_TOKEN,
+            )
 
         if hasattr(MODEL, "to"):
             MODEL = MODEL.to(DEVICE)
@@ -269,15 +283,11 @@ def _audit(action: str, details: str = "", entity_type: str = "",
     conn = db.get_db()
     conn.execute(
         """INSERT INTO audit_logs
-           (id, timestamp, user_id, user_name, role, action,
-            entity_type, entity_id, details, ip_address)
-           VALUES (?,?,?,?,?,?,?,?,?,?)""",
+           (id, user_id, action, entity_type, entity_id, details, ip_address)
+           VALUES (?,?,?,?,?,?,?)""",
         (
             str(uuid.uuid4()),
-            _now_iso(),
             user["id"] if user else "system",
-            user.get("full_name", user.get("name", "Unknown")) if user else "system",
-            user["role"] if user else "system",
             action,
             entity_type,
             entity_id,
@@ -297,7 +307,18 @@ def _row_to_dict(row):
 
 def _rows_to_list(rows):
     """Convert a list of sqlite3.Row objects to a list of dicts."""
-    return [dict(r) for r in rows]
+    return [_row_to_dict(r) for r in rows]
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Return JSON instead of HTML for HTTP errors and unhandled exceptions."""
+    if os.environ.get("FLASK_DEBUG", "0") == "1":
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+    return jsonify({"error": "Internal Server Error"}), 500
 
 
 def _save_upload(file_obj):
@@ -546,7 +567,7 @@ def get_child(child_id):
         return jsonify({"error": "Child not found"}), 404
 
     history = conn.execute(
-        "SELECT * FROM case_history WHERE child_id = ? ORDER BY timestamp ASC",
+        "SELECT * FROM case_history WHERE child_id = ? ORDER BY event_date ASC",
         (child_id,),
     ).fetchall()
 
@@ -578,29 +599,25 @@ def register_child():
 
     conn.execute(
         """INSERT INTO children
-           (id, child_code, name, age, gender, date_of_birth, district,
-            cci_id, admission_date, admission_category, legal_status,
-            is_lfa_eligible, father_name, mother_name, guardian_name,
-            contact_phone, address, created_at, updated_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           (id, child_code, name, date_of_birth, estimated_age, gender, admission_date,
+            admission_category, physical_description, cci_id, district, legal_status,
+            is_lfa_eligible, lfa_flag_reason, created_at, updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             child_id,
             child_code,
             data.get("name", ""),
-            data.get("age"),
-            data.get("gender", ""),
             data.get("date_of_birth", ""),
-            data.get("district", "Hyderabad"),
-            data.get("cci_id", ""),
+            int(data.get("age", 0)) if data.get("age") else None,
+            data.get("gender", "Other"),
             data.get("admission_date", now[:10]),
-            data.get("admission_category", "CNCP"),
-            data.get("legal_status", "Newly Admitted"),
+            data.get("admission_category", "other"),
+            data.get("physical_description", ""),
+            data.get("cci_id", "none"),
+            data.get("district", "Hyderabad"),
+            "Under Inquiry",
             data.get("is_lfa_eligible", 0),
-            data.get("father_name", ""),
-            data.get("mother_name", ""),
-            data.get("guardian_name", ""),
-            data.get("contact_phone", ""),
-            data.get("address", ""),
+            data.get("lfa_flag_reason", ""),
             now,
             now,
         ),
@@ -609,18 +626,15 @@ def register_child():
     # Case history entry for admission
     conn.execute(
         """INSERT INTO case_history
-           (id, child_id, timestamp, action, old_status, new_status,
-            performed_by, notes)
-           VALUES (?,?,?,?,?,?,?,?)""",
+           (id, child_id, event_type, event_date, description, performed_by)
+           VALUES (?,?,?,?,?,?)""",
         (
             str(uuid.uuid4()),
             child_id,
-            now,
             "ADMISSION",
-            "",
-            "Newly Admitted",
-            user["name"],
+            now,
             f"Child registered with code {child_code}",
+            user.get("full_name", "Unknown"),
         ),
     )
 
@@ -628,7 +642,7 @@ def register_child():
     due_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
     conn.execute(
         """INSERT INTO deadlines
-           (id, child_id, type, description, due_date, status, created_at)
+           (id, child_id, deadline_type, notes, due_date, status, created_at)
            VALUES (?,?,?,?,?,?,?)""",
         (
             str(uuid.uuid4()),
@@ -674,6 +688,18 @@ def update_child_status(child_id):
     old_status = child["legal_status"]
     now = _now_iso()
 
+    status_map = {
+        "under_inquiry": "Under Inquiry",
+        "care_and_protection": "Under Review",
+        "conflict_with_law": "Under Review",
+        "restored": "Restored to Family",
+        "foster_care": "Placed in Foster Care",
+        "adopted": "Legally Free for Adoption",
+        "aftercare": "Aged Out"
+    }
+    
+    new_status = status_map.get(new_status, "Under Inquiry")
+
     conn.execute(
         "UPDATE children SET legal_status = ?, updated_at = ? WHERE id = ?",
         (new_status, now, child_id),
@@ -681,18 +707,15 @@ def update_child_status(child_id):
 
     conn.execute(
         """INSERT INTO case_history
-           (id, child_id, timestamp, action, old_status, new_status,
-            performed_by, notes)
-           VALUES (?,?,?,?,?,?,?,?)""",
+           (id, child_id, event_type, event_date, description, performed_by)
+           VALUES (?,?,?,?,?,?)""",
         (
             str(uuid.uuid4()),
             child_id,
-            now,
             "STATUS_CHANGE",
-            old_status,
-            new_status,
-            user["name"],
-            data.get("notes", ""),
+            now,
+            f"{old_status} -> {new_status}. {data.get('notes', '')}",
+            user.get("full_name", "Unknown"),
         ),
     )
     conn.commit()
@@ -716,7 +739,7 @@ def child_history(child_id):
     """Return the immutable case-history timeline for a child."""
     conn = db.get_db()
     rows = conn.execute(
-        "SELECT * FROM case_history WHERE child_id = ? ORDER BY timestamp ASC",
+        "SELECT * FROM case_history WHERE child_id = ? ORDER BY event_date ASC",
         (child_id,),
     ).fetchall()
     return jsonify(_rows_to_list(rows))
@@ -771,23 +794,22 @@ def create_hearing():
 
     conn.execute(
         """INSERT INTO hearings
-           (id, child_id, hearing_date, hearing_time, hearing_type,
-            district, status, location, notes, transcript,
-            attendees, created_by, created_at, updated_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           (id, child_id, hearing_date, scheduled_time, status, reschedule_reason, attendees, transcript_raw, transcript_edited, transcript_language, notes, created_by, district, created_at, updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             hearing_id,
             data.get("child_id", ""),
-            data.get("hearing_date", ""),
+            data.get("hearing_date", now[:10]),
             data.get("hearing_time", ""),
-            data.get("hearing_type", "Regular"),
-            data.get("district", "Hyderabad"),
-            "Scheduled",
-            data.get("location", ""),
-            data.get("notes", ""),
+            "scheduled",
             "",
-            data.get("attendees", ""),
-            user["id"],
+            data.get("attendees", "[]"),
+            "",
+            "",
+            "hi",
+            data.get("notes", ""),
+            user.get("full_name", "Unknown"),
+            data.get("district", "Hyderabad"),
             now,
             now,
         ),
@@ -971,35 +993,31 @@ def create_order():
         # Grab latest hearing transcript if not supplied
         if not transcript:
             latest_hearing = conn.execute(
-                """SELECT transcript FROM hearings
-                   WHERE child_id = ? AND transcript != ''
+                """SELECT transcript_raw FROM hearings
+                   WHERE child_id = ? AND transcript_raw != ''
                    ORDER BY hearing_date DESC LIMIT 1""",
                 (child_id,),
             ).fetchone()
             if latest_hearing:
-                transcript = latest_hearing["transcript"]
+                transcript = latest_hearing["transcript_raw"]
 
     conn.execute(
         """INSERT INTO orders
-           (id, order_number, child_id, child_name, child_code, order_type,
-            district, status, order_date, content, transcript,
-            created_by, approved_by, created_at, updated_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           (id, order_number, child_id, hearing_id, order_type,
+            district, status, order_body, findings, created_by,
+            created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
         (
             order_id,
             order_number,
             child_id,
-            child_name,
-            child_code,
-            data.get("order_type", "CWC Order"),
+            data.get("hearing_id", ""),
+            data.get("order_type", "other"),
             data.get("district", "Hyderabad"),
-            "Draft",
-            data.get("order_date", now[:10]),
-            data.get("content", ""),
-            transcript,
-            user["id"],
-            "",
-            now,
+            "draft",
+            data.get("order_body", ""),
+            data.get("findings", ""),
+            user.get("full_name", "Unknown"),
             now,
         ),
     )
@@ -1033,7 +1051,7 @@ def approve_order(order_id):
     conn.execute(
         """UPDATE orders SET status = 'Approved', approved_by = ?,
            updated_at = ? WHERE id = ?""",
-        (user["name"], now, order_id),
+        (user.get("full_name", "Unknown"), now, order_id),
     )
     conn.commit()
 
@@ -1158,7 +1176,7 @@ def log_family_visit(child_id):
             data.get("relationship", ""),
             data.get("duration_minutes", 0),
             data.get("notes", ""),
-            user["name"],
+            user.get("full_name", "Unknown"),
             now,
         ),
     )
@@ -1219,12 +1237,12 @@ def log_inspection(cci_id):
             inspection_id,
             cci_id,
             data.get("visit_date", now[:10]),
-            data.get("inspector_name", user["name"]),
+            data.get("inspector_name", user.get("full_name", "Unknown")),
             data.get("visit_type", "Routine"),
             data.get("findings", ""),
             data.get("recommendations", ""),
             data.get("rating", ""),
-            user["name"],
+            user.get("full_name", "Unknown"),
             now,
         ),
     )
@@ -1304,14 +1322,16 @@ def dashboard_stats():
 
     # Children approaching age-out (17+ years old)
     ageout = conn.execute(
-        "SELECT COUNT(*) as cnt FROM children WHERE age >= 17"
+        "SELECT COUNT(*) as cnt FROM children WHERE estimated_age >= 17"
     ).fetchone()["cnt"]
 
     # Children with no family contact for 6+ months
     no_contact = conn.execute(
-        """SELECT COUNT(*) as cnt FROM children
-           WHERE last_family_contact IS NULL
-              OR last_family_contact < ?""",
+        """SELECT COUNT(*) as cnt FROM children c
+           WHERE NOT EXISTS (
+               SELECT 1 FROM family_visits fv
+               WHERE fv.child_id = c.id AND fv.visit_date >= ?
+           )""",
         (six_months_ago,),
     ).fetchone()["cnt"]
 
@@ -1379,7 +1399,7 @@ def dashboard_alerts():
 
     # Age-out alerts (children aged 17+)
     ageout_children = conn.execute(
-        "SELECT id, child_code, name, age FROM children WHERE age >= 17"
+        "SELECT id, child_code, name, estimated_age FROM children WHERE estimated_age >= 17"
     ).fetchall()
     for c in ageout_children:
         alerts.append({
@@ -1387,7 +1407,7 @@ def dashboard_alerts():
             "severity": "high",
             "child_id": c["id"],
             "child_code": c["child_code"],
-            "message":  f"{c['name']} (age {c['age']}) is approaching age-out",
+            "message":  f"{c['name']} (age {c['estimated_age']}) is approaching age-out",
         })
 
     # LFA eligible children
@@ -1406,9 +1426,11 @@ def dashboard_alerts():
 
     # No family contact for 6+ months
     no_contact = conn.execute(
-        """SELECT id, child_code, name, last_family_contact FROM children
-           WHERE last_family_contact IS NULL
-              OR last_family_contact < ?""",
+        """SELECT c.id, c.child_code, c.name FROM children c
+           WHERE NOT EXISTS (
+               SELECT 1 FROM family_visits fv
+               WHERE fv.child_id = c.id AND fv.visit_date >= ?
+           )""",
         (six_months_ago,),
     ).fetchall()
     for c in no_contact:
@@ -1475,21 +1497,23 @@ def monthly_report():
 
     orders = conn.execute(
         """SELECT COUNT(*) as cnt FROM orders
-           WHERE order_date >= ? AND order_date < ?""",
+           WHERE created_at >= ? AND created_at < ?""",
         (start, end),
     ).fetchone()["cnt"]
 
     restorations = conn.execute(
         """SELECT COUNT(*) as cnt FROM case_history
-           WHERE action = 'STATUS_CHANGE' AND new_status = 'Restored'
-             AND timestamp >= ? AND timestamp < ?""",
+           WHERE event_type = 'status_change' 
+             AND (description LIKE '%Restored%' OR metadata LIKE '%Restored%')
+             AND event_date >= ? AND event_date < ?""",
         (start, end),
     ).fetchone()["cnt"]
 
     adoptions = conn.execute(
         """SELECT COUNT(*) as cnt FROM case_history
-           WHERE action = 'STATUS_CHANGE' AND new_status = 'Adopted'
-             AND timestamp >= ? AND timestamp < ?""",
+           WHERE event_type = 'status_change' 
+             AND (description LIKE '%Adopted%' OR metadata LIKE '%Adopted%' OR description LIKE '%Adoption%' OR metadata LIKE '%Adoption%')
+             AND event_date >= ? AND event_date < ?""",
         (start, end),
     ).fetchone()["cnt"]
 
@@ -1540,7 +1564,7 @@ def quarterly_report():
 
     orders = conn.execute(
         """SELECT COUNT(*) as cnt FROM orders
-           WHERE order_date >= ? AND order_date < ?""",
+           WHERE created_at >= ? AND created_at < ?""",
         (start, end),
     ).fetchone()["cnt"]
 
@@ -1589,7 +1613,7 @@ def audit_log():
     conn = db.get_db()
     limit = request.args.get("limit", 200, type=int)
     rows = conn.execute(
-        "SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT ?",
+        "SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ?",
         (limit,),
     ).fetchall()
     return jsonify(_rows_to_list(rows))
@@ -1621,4 +1645,5 @@ if __name__ == "__main__":
         print("       set HF_TOKEN=hf_your_token_here")
         print("     Then restart the app.")
         print()
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug_mode, host="0.0.0.0", port=5000)

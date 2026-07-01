@@ -2045,7 +2045,7 @@ async function loadUserList() {
       return;
     }
     container.innerHTML = users.map(u => `
-      <div class="user-card" onclick="loginAsUser(${u.id})">
+      <div class="user-card" onclick="loginAsUser('${u.id}')">
         <div class="avatar">${(u.full_name || u.username || '?')[0].toUpperCase()}</div>
         <div class="user-info">
           <div class="user-name">${esc(u.full_name || u.username)}</div>
