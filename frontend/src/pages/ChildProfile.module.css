@@ -1,0 +1,377 @@
+.container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  color: var(--text);
+  background-color: var(--bg);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.backLink {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.backLink:hover {
+  color: var(--text);
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.mainCard {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.avatarLarge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--accent-bg);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.childName {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.childCode {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.statusBadge {
+  background-color: var(--red-bg);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+.infoValue {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.btnPrimary, .btnSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btnPrimary {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background-color: var(--accent-light);
+}
+
+.btnSecondary {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btnSecondary:hover {
+  border-color: var(--border-hover);
+}
+
+.timelineSection {
+  margin-top: 16px;
+}
+
+.timelineTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 16px;
+}
+
+.timelineIconWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 16px;
+}
+
+.timelineIcon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background-color: var(--surface);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.iconOrange {
+  border-color: var(--accent);
+}
+
+.iconTeal {
+  border-color: var(--green);
+}
+
+.timelineLine {
+  width: 3px;
+  background-color: rgba(43, 38, 34, 0.15);
+  flex-grow: 1;
+  margin: 4px 0;
+  min-height: 24px;
+  border-radius: 2px;
+}
+
+.timelineContent {
+  padding-bottom: 24px;
+  flex-grow: 1;
+}
+
+.timelineDate {
+  font-size: 13px;
+  color: var(--text, #2B2622);
+  margin-bottom: 4px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.timelineEventType {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: var(--text, #2B2622);
+}
+
+.timelineDesc {
+  font-size: 14.5px;
+  color: var(--text, #2B2622);
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.timelineAuthor {
+  font-size: 12.5px;
+  color: var(--text-secondary, #6B6259);
+  font-weight: 500;
+  margin: 0;
+}
+
+.noHistory {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.loadingState, .errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--text-secondary);
+  gap: 16px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.backButton {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.backButton:hover {
+  border-color: var(--border-hover);
+}
+
+@media (min-width: 900px) {
+  .container {
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    grid-template-rows: auto auto 1fr;
+    column-gap: 48px;
+    row-gap: 0;
+  }
+
+  .header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin-bottom: 32px;
+  }
+
+  .mainCard {
+    grid-column: 1;
+    grid-row: 2;
+    margin-bottom: 24px;
+  }
+
+  .actions {
+    grid-column: 1;
+    grid-row: 3;
+    margin-bottom: 0;
+    align-self: start;
+  }
+
+  .timelineSection {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    margin-top: 0;
+  }
+}
+
+/* ===== Responsive Mobile Tweaks ===== */
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .mainCard {
+    padding: 16px;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

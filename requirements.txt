@@ -1,6 +1,10 @@
-flask>=3.0.0
+fastapi
+uvicorn
+python-multipart
+pydantic
 torch>=2.1.0
 torchaudio>=2.1.0
 transformers>=4.40.0
 soundfile>=0.12.1
 librosa>=0.10.0
+weasyprint>=61.0

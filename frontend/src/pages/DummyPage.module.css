@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  padding: 40px 20px;
+}
+
+.content {
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 2rem;
+  color: var(--text, #2B2622);
+  margin: 0 0 16px 0;
+}
+
+.description {
+  color: var(--text-secondary, #6B6259);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}

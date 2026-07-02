@@ -5,9 +5,10 @@ Used by Child Welfare Committees (CWCs) and District Child Protection Units
 (DCPUs) in India. Fully self-contained: import and call init_db() to create
 and seed everything.
 
-Tables (10):
+Tables (11):
   users, ccis, children, case_history (immutable), hearings, orders,
-  family_visits, cci_visits, deadlines, audit_logs (immutable)
+  family_visits, cci_visits, deadlines, audit_logs (immutable),
+  notifications
 
 Usage:
     from server.db import init_db, get_db
@@ -83,6 +84,7 @@ CREATE TABLE IF NOT EXISTS users (
                         'cci_staff','cwc_member','cwc_chairperson',
                         'dcpu_officer','wcd_official','system_admin')),
     district        TEXT NOT NULL,
+    location        TEXT,
     cci_id          TEXT,
     email           TEXT,
     phone           TEXT,
@@ -104,6 +106,7 @@ CREATE TABLE IF NOT EXISTS ccis (
     current_occupancy   INTEGER DEFAULT 0,
     contact_person      TEXT,
     contact_phone       TEXT,
+    staffing_details    TEXT,
     last_inspection_date TEXT,
     created_at          TEXT DEFAULT (datetime('now'))
 );
@@ -189,6 +192,9 @@ CREATE TABLE IF NOT EXISTS hearings (
     transcript_language TEXT DEFAULT 'hi',
     notes               TEXT,
     audio_url           TEXT,
+    transcript_finalized     INTEGER DEFAULT 0,
+    transcript_finalized_at  TEXT,
+    transcript_finalized_by  TEXT,
     created_by          TEXT NOT NULL,
     district            TEXT NOT NULL,
     created_at          TEXT DEFAULT (datetime('now')),
@@ -216,6 +222,7 @@ CREATE TABLE IF NOT EXISTS orders (
     created_by      TEXT NOT NULL,
     district        TEXT NOT NULL,
     created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (child_id) REFERENCES children(id),
     FOREIGN KEY (hearing_id) REFERENCES hearings(id)
 );
@@ -263,6 +270,8 @@ CREATE TABLE IF NOT EXISTS deadlines (
                         'pending','completed','overdue','escalated')),
     assigned_to     TEXT,
     completed_at    TEXT,
+    escalated_to    TEXT,
+    escalated_at    TEXT,
     notes           TEXT,
     created_at      TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (child_id) REFERENCES children(id)
@@ -295,6 +304,47 @@ BEFORE DELETE ON audit_logs
 BEGIN
     SELECT RAISE(ABORT, 'audit_logs is immutable — DELETE not allowed');
 END;
+
+-- ==========================================================================
+-- 11. notifications — User notification inbox
+-- ==========================================================================
+CREATE TABLE IF NOT EXISTS notifications (
+    id              TEXT PRIMARY KEY,
+    user_id         TEXT NOT NULL,
+    type            TEXT NOT NULL,
+    title           TEXT NOT NULL,
+    message         TEXT NOT NULL,
+    entity_type     TEXT,
+    entity_id       TEXT,
+    is_read         INTEGER DEFAULT 0,
+    created_at      TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- ==========================================================================
+-- Performance indexes
+-- ==========================================================================
+CREATE INDEX IF NOT EXISTS idx_children_cci_id ON children(cci_id);
+CREATE INDEX IF NOT EXISTS idx_children_district ON children(district);
+CREATE INDEX IF NOT EXISTS idx_children_legal_status ON children(legal_status);
+CREATE INDEX IF NOT EXISTS idx_children_admission_date ON children(admission_date);
+CREATE INDEX IF NOT EXISTS idx_case_history_child_id ON case_history(child_id);
+CREATE INDEX IF NOT EXISTS idx_case_history_event_date ON case_history(event_date);
+CREATE INDEX IF NOT EXISTS idx_hearings_child_id ON hearings(child_id);
+CREATE INDEX IF NOT EXISTS idx_hearings_hearing_date ON hearings(hearing_date);
+CREATE INDEX IF NOT EXISTS idx_hearings_district ON hearings(district);
+CREATE INDEX IF NOT EXISTS idx_orders_child_id ON orders(child_id);
+CREATE INDEX IF NOT EXISTS idx_orders_district ON orders(district);
+CREATE INDEX IF NOT EXISTS idx_family_visits_child_id ON family_visits(child_id);
+CREATE INDEX IF NOT EXISTS idx_family_visits_visit_date ON family_visits(visit_date);
+CREATE INDEX IF NOT EXISTS idx_deadlines_child_id ON deadlines(child_id);
+CREATE INDEX IF NOT EXISTS idx_deadlines_due_date ON deadlines(due_date);
+CREATE INDEX IF NOT EXISTS idx_deadlines_status ON deadlines(status);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_cci_visits_cci_id ON cci_visits(cci_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
 """
 
 
@@ -327,11 +377,11 @@ def seed_data(conn: sqlite3.Connection) -> None:
         (cci_ids[0], "Sishu Vihar CCI", "Hyderabad", "Telangana",
          "Plot 14, Nampally, Hyderabad 500001", 50, 38,
          "Lakshmi Devi", "9876543210", _iso_date(now - timedelta(days=45))),
-        (cci_ids[1], "Rainbow Children Home", "Hyderabad", "Telangana",
-         "12-2-831, Mehdipatnam, Hyderabad 500028", 40, 32,
+        (cci_ids[1], "Rainbow Children Home", "Noida", "Uttar Pradesh",
+         "Sector 62, Noida, UP 201309", 40, 32,
          "Suresh Rao", "9876543211", _iso_date(now - timedelta(days=90))),
-        (cci_ids[2], "Bal Sadhan CCI", "Hyderabad", "Telangana",
-         "H.No 5-9-22, Secunderabad 500003", 35, 27,
+        (cci_ids[2], "Bal Sadhan CCI", "Pune", "Maharashtra",
+         "Shivaji Nagar, Pune 411005", 35, 27,
          "Kavitha Nair", "9876543212", _iso_date(now - timedelta(days=120))),
     ]
     conn.executemany(
@@ -349,47 +399,44 @@ def seed_data(conn: sqlite3.Connection) -> None:
         "cwc_chairperson", "dcpu_officer",
         "wcd_official", "system_admin",
     ]}
-    # We only need 8: 3 cci_staff + 2 cwc_member + 1 chairperson + 1 dcpu + 1 admin = 8
-    # wcd_official is 9th, but the spec says 8 across *all* roles. Let's include
-    # all listed: that gives 9 users which still covers the requirement.
     users = [
         # CCI staff — one per CCI
         (user_ids["cci_staff_1"], "lakshmi.devi", password,
-         "Lakshmi Devi", "cci_staff", "Hyderabad", cci_ids[0],
+         "Lakshmi Devi", "cci_staff", "Hyderabad", "Sishu Vihar CCI, Hyderabad", cci_ids[0],
          "lakshmi.devi@cpms.gov.in", "9876543210"),
         (user_ids["cci_staff_2"], "suresh.rao", password,
-         "Suresh Rao", "cci_staff", "Hyderabad", cci_ids[1],
+         "Suresh Rao", "cci_staff", "Noida", "Rainbow Children Home, Noida, Uttar Pradesh", cci_ids[1],
          "suresh.rao@cpms.gov.in", "9876543211"),
         (user_ids["cci_staff_3"], "kavitha.nair", password,
-         "Kavitha Nair", "cci_staff", "Hyderabad", cci_ids[2],
+         "Kavitha Nair", "cci_staff", "Pune", "Bal Sadhan CCI, Pune, Maharashtra", cci_ids[2],
          "kavitha.nair@cpms.gov.in", "9876543212"),
         # CWC members
         (user_ids["cwc_member_1"], "priya.sharma", password,
-         "Priya Sharma", "cwc_member", "Hyderabad", None,
+         "Priya Sharma", "cwc_member", "Hyderabad", "CWC Member, Hyderabad, Telangana", None,
          "priya.sharma@cwc.gov.in", "9800000001"),
         (user_ids["cwc_member_2"], "vikram.singh", password,
-         "Vikram Singh", "cwc_member", "Hyderabad", None,
+         "Vikram Singh", "cwc_member", "Noida", "CWC Member, Noida, Uttar Pradesh", None,
          "vikram.singh@cwc.gov.in", "9800000002"),
         # CWC chairperson
         (user_ids["cwc_chairperson"], "deepak.joshi", password,
-         "Deepak Joshi", "cwc_chairperson", "Hyderabad", None,
+         "Deepak Joshi", "cwc_chairperson", "Hyderabad", "CWC Chairperson, Hyderabad, Telangana", None,
          "deepak.joshi@cwc.gov.in", "9800000003"),
         # DCPU officer
         (user_ids["dcpu_officer"], "meera.patel", password,
-         "Meera Patel", "dcpu_officer", "Hyderabad", None,
+         "Meera Patel", "dcpu_officer", "Hyderabad", "DCPU, Hyderabad, Telangana", None,
          "meera.patel@dcpu.gov.in", "9800000004"),
         # WCD official (kept for completeness even though spec says 8)
         (user_ids["wcd_official"], "ananya.reddy", password,
-         "Ananya Reddy", "wcd_official", "Hyderabad", None,
+         "Ananya Reddy", "wcd_official", "Hyderabad", "WCD Official, Telangana", None,
          "ananya.reddy@wcd.gov.in", "9800000005"),
         # System admin
         (user_ids["system_admin"], "admin", password,
-         "System Administrator", "system_admin", "Hyderabad", None,
+         "System Administrator", "system_admin", "System", "HQ, New Delhi", None,
          "admin@cpms.gov.in", "9800000000"),
     ]
     conn.executemany(
-        "INSERT INTO users (id, username, password_hash, full_name, role, "
-        "district, cci_id, email, phone) VALUES (?,?,?,?,?,?,?,?,?)", users,
+        "INSERT INTO users (id, username, password_hash, full_name, role, district, location, cci_id, email, phone) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?)", users,
     )
 
     # -----------------------------------------------------------------------
@@ -927,7 +974,7 @@ if __name__ == "__main__":
     tables = [
         "users", "ccis", "children", "case_history",
         "hearings", "orders", "family_visits", "cci_visits",
-        "deadlines", "audit_logs",
+        "deadlines", "audit_logs", "notifications",
     ]
     for t in tables:
         count = conn.execute(f"SELECT COUNT(*) AS cnt FROM {t}").fetchone()["cnt"]

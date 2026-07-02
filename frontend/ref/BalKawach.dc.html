@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0}
+  @keyframes bk-pulse{0%{box-shadow:0 0 0 0 rgba(194,74,58,.45)}70%{box-shadow:0 0 0 14px rgba(194,74,58,0)}100%{box-shadow:0 0 0 0 rgba(194,74,58,0)}}
+  @keyframes bk-blink{0%,100%{opacity:1}50%{opacity:.25}}
+  @keyframes bk-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes bk-caret{0%,100%{opacity:1}50%{opacity:0}}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#e0d8cb;border-radius:4px}
+</style>
+</helmet>
+
+<div style="font-family:'Hanken Grotesk',system-ui,sans-serif;background:#F3EDE3;color:#2B2622;min-height:100vh;-webkit-font-smoothing:antialiased">
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;display:flex;align-items:stretch;justify-content:center;background:#F3EDE3">
+    <div style="width:100%;max-width:460px;background:#FBF8F2;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(43,38,34,.08)">
+      <div style="padding:56px 30px 40px;background:linear-gradient(180deg,#2B2622 0%,#39312A 100%);color:#FBF8F2;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(228,114,12,.55),rgba(228,114,12,0) 70%)"></div>
+        <div style="display:flex;align-items:center;gap:12px;position:relative">
+          <div style="width:46px;height:46px;border-radius:50%;background:#E4720C;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FBF8F2" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.5-7 9-4-1.5-7-4.6-7-9V6l7-3z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>
+          </div>
+          <div>
+            <div style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.45rem;letter-spacing:-.01em">BalKawach</div>
+            <div style="font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#C9A98C">बाल कवच · Child Shield</div>
+          </div>
+        </div>
+        <p style="margin:26px 0 0;font-size:1.06rem;line-height:1.5;color:#EDE4D8;max-width:30ch">Every child in the system, accounted for. No review missed, no child aged out unseen.</p>
+        <p style="margin:14px 0 0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:#9A8B7C">By WAIC · Where Are India's Children</p>
+      </div>
+
+      <div style="padding:30px 30px 40px;flex:1">
+        <p style="margin:0 0 6px;font-family:'Bricolage Grotesque';font-weight:600;font-size:1.15rem">Sign in to continue</p>
+        <p style="margin:0 0 22px;font-size:.9rem;color:#6B6259">Choose your role to enter the workspace</p>
+
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="4">
+          <button onClick="{{ r.pick }}" style="width:100%;display:flex;align-items:center;gap:14px;text-align:left;background:#fff;border:1.5px solid #EAE1D3;border-radius:16px;padding:16px;margin-bottom:12px;cursor:pointer;min-height:64px;transition:border-color .15s,transform .1s" style-hover="border-color:#E4720C;transform:translateY(-1px)">
+            <span style="width:44px;height:44px;border-radius:12px;background:#FBEFE2;color:#C25B0A;display:flex;align-items:center;justify-content:center;flex-shrink:0" dangerouslySetInnerHTML="{{ r.icon }}"></span>
+            <span style="flex:1">
+              <span style="display:block;font-weight:600;font-size:.98rem;color:#2B2622">{{ r.title }}</span>
+              <span style="display:block;font-size:.8rem;color:#8A8175;margin-top:2px">{{ r.sub }}</span>
+            </span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9BFB0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </sc-for>
+
+        <p style="margin:20px 0 0;font-size:.74rem;color:#A79D8F;text-align:center;line-height:1.5">Protected under the Juvenile Justice (Care &amp; Protection of Children) Act, 2015.<br/>Demonstration workspace with sample data.</p>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:460px;margin:0 auto;min-height:100vh;background:#FBF8F2;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(43,38,34,.06)">
+
+    <header style="position:sticky;top:0;z-index:20;background:rgba(251,248,242,.92);backdrop-filter:blur(10px);border-bottom:1px solid #EDE4D6">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;min-height:60px">
+        <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ back }}" aria-label="Back" style="width:38px;height:38px;margin-left:-6px;border:none;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#2B2622" style-hover="background:#F1E9DB">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+        </sc-if>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.18rem;letter-spacing:-.01em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ screenTitle }}</div>
+          <div style="font-size:.74rem;color:#9A8B7C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ screenSub }}</div>
+        </div>
+        <button onClick="{{ logout }}" aria-label="Sign out" style="display:flex;align-items:center;gap:7px;height:38px;padding:0 8px 0 12px;border:1px solid #EAE1D3;background:#fff;border-radius:999px;cursor:pointer;color:#6B6259;font-family:inherit;font-size:.8rem;font-weight:600" style-hover="border-color:#C24A3A;color:#C24A3A">
+          <span style="width:24px;height:24px;border-radius:50%;background:#FBEFE2;color:#C25B0A;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">{{ userInitials }}</span>
+        </button>
+      </div>
+    </header>
+
+    <main style="flex:1;overflow-y:auto;padding:18px 18px 96px">
+
+      <!-- DASHBOARD -->
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="background:linear-gradient(135deg,#2B2622,#40352B);color:#FBF8F2;border-radius:20px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden">
+            <div style="position:absolute;right:-30px;bottom:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(228,114,12,.5),transparent 70%)"></div>
+            <div style="position:relative">
+              <div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:#C9A98C">{{ district }} · DCPU</div>
+              <div style="display:flex;align-items:baseline;gap:10px;margin-top:8px">
+                <span style="font-family:'Bricolage Grotesque';font-weight:700;font-size:2.6rem;line-height:1">{{ kpi.total }}</span>
+                <span style="font-size:.92rem;color:#EDE4D8">children under care</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(194,74,58,.22);color:#F4C4BB;border-radius:999px;padding:5px 11px;font-size:.78rem;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#E8897B"></span>{{ kpi.overdue }} reviews overdue</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(228,164,58,.2);color:#F2D79A;border-radius:999px;padding:5px 11px;font-size:.78rem;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#E6B24C"></span>{{ kpi.lfa }} LFA to file</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+            <div style="background:#fff;border:1px solid #EEE6D8;border-radius:16px;padding:15px">
+              <div style="display:flex;align-items:center;gap:8px;color:#C25B0A"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l3 0M3 12l3 0M3 18l3 0"/><path d="M9 5h12M9 12h12M9 19h12"/></svg><span style="font-size:.76rem;color:#8A8175;font-weight:600">Pending reviews</span></div>
+              <div style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.9rem;margin-top:6px">{{ kpi.pending }}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #EEE6D8;border-radius:16px;padding:15px">
+              <div style="display:flex;align-items:center;gap:8px;color:#4B7A5B"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 2 4-6"/></svg><span style="font-size:.76rem;color:#8A8175;font-weight:600">Hearings this week</span></div>
+              <div style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.9rem;margin-top:6px">{{ kpi.hearings }}</div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #EEE6D8;border-radius:18px;padding:18px;margin-bottom:18px">
+            <div style="font-family:'Bricolage Grotesque';font-weight:600;font-size:1.02rem;margin-bottom:14px">Case status breakdown</div>
+            <div style="display:flex;align-items:center;gap:20px">
+              <div style="width:120px;height:120px;border-radius:50%;flex-shrink:0;position:relative;background:{{ donutGradient }}">
+                <div style="position:absolute;inset:20px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <span style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.5rem;line-height:1">{{ kpi.total }}</span>
+                  <span style="font-size:.66rem;color:#9A8B7C;letter-spacing:.06em;text-transform:uppercase">total</span>
+                </div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ statusLegend }}" as="s" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:9px;font-size:.82rem">
+                    <span style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:{{ s.color }}"></span>
+                    <span style="flex:1;color:#4A4137">{{ s.label }}</span>
+                    <span style="font-weight:700;color:#2B2622">{{ s.count }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-family:'Bricolage Grotesque';font-weight:600;font-size:1.02rem">Needs attention</div>
+            <button onClick="{{ goAlerts }}" style="border:none;background:transparent;color:#C25B0A;font-family:inherit;font-weight:600;font-size:.82rem;cursor:pointer;padding:4px">View all</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ topAlerts }}" as="a" hint-placeholder-count="3">
+              <div onClick="{{ a.open }}" style="display:flex;gap:12px;background:#fff;border:1px solid #EEE6D8;border-left:3px solid {{ a.rail }};border-radius:14px;padding:13px 14px;cursor:pointer" style-hover="border-color:#DDD2C0">
+                <span style="width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ a.tintBg }};color:{{ a.rail }}" dangerouslySetInnerHTML="{{ a.icon }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:600;font-size:.9rem;color:#2B2622">{{ a.title }}</span>
+                    <span style="font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:{{ a.rail }};background:{{ a.tintBg }};padding:2px 7px;border-radius:6px">{{ a.tag }}</span>
+                  </div>
+                  <div style="font-size:.82rem;color:#6B6259;margin-top:3px;line-height:1.4">{{ a.desc }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- CHILDREN LIST -->
+      <sc-if value="{{ isChildren }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #EAE1D3;border-radius:14px;padding:0 14px;margin-bottom:12px;height:50px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A79D8F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            <input value="{{ childQ }}" onInput="{{ setChildQ }}" placeholder="Search by name or code…" style="flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:.95rem;color:#2B2622;min-width:0"/>
+          </div>
+          <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;-webkit-overflow-scrolling:touch">
+            <sc-for list="{{ statusChips }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pick }}" style="flex-shrink:0;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};border-radius:999px;padding:8px 14px;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.label }}</button>
+            </sc-for>
+          </div>
+
+          <div style="font-size:.78rem;color:#9A8B7C;margin-bottom:10px">{{ childCount }}</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ children }}" as="c" hint-placeholder-count="5">
+              <button onClick="{{ c.open }}" style="text-align:left;display:flex;gap:13px;align-items:center;background:#fff;border:1px solid #EEE6D8;border-radius:16px;padding:13px;cursor:pointer;font-family:inherit" style-hover="border-color:#E4720C;transform:translateY(-1px)">
+                <span style="width:46px;height:46px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:700;font-size:1.02rem;background:{{ c.avBg }};color:{{ c.avFg }}">{{ c.initials }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:600;font-size:.98rem;color:#2B2622">{{ c.name }}</span>
+                    <sc-if value="{{ c.lfa }}" hint-placeholder-val="{{ false }}"><span style="font-size:.62rem;font-weight:700;letter-spacing:.04em;background:#FBF0DA;color:#B07E14;padding:2px 6px;border-radius:5px">LFA</span></sc-if>
+                  </span>
+                  <span style="display:block;font-size:.79rem;color:#8A8175;margin-top:2px">{{ c.code }} · {{ c.ageLabel }} · {{ c.cci }}</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:.72rem;font-weight:600;color:{{ c.statusFg }};background:{{ c.statusBg }};padding:3px 9px;border-radius:999px">{{ c.statusLabel }}</span>
+                </span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9BFB0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- CHILD DETAIL -->
+      <sc-if value="{{ isChildDetail }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="background:#fff;border:1px solid #EEE6D8;border-radius:20px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;gap:15px;align-items:center">
+              <span style="width:64px;height:64px;border-radius:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:700;font-size:1.5rem;background:{{ child.avBg }};color:{{ child.avFg }}">{{ child.initials }}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.3rem;letter-spacing:-.01em">{{ child.name }}</div>
+                <div style="font-size:.82rem;color:#8A8175;margin-top:2px">{{ child.code }}</div>
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                  <span style="font-size:.72rem;font-weight:600;color:{{ child.statusFg }};background:{{ child.statusBg }};padding:3px 9px;border-radius:999px">{{ child.statusLabel }}</span>
+                  <sc-if value="{{ child.lfa }}" hint-placeholder-val="{{ false }}"><span style="font-size:.72rem;font-weight:600;color:#B07E14;background:#FBF0DA;padding:3px 9px;border-radius:999px">Legally Free for Adoption</span></sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#EEE6D8;border-radius:12px;overflow:hidden;margin-top:16px">
+              <sc-for list="{{ childFacts }}" as="f" hint-placeholder-count="6">
+                <div style="background:#fff;padding:11px 13px">
+                  <div style="font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:#A79D8F">{{ f.k }}</div>
+                  <div style="font-size:.9rem;font-weight:600;color:#2B2622;margin-top:3px">{{ f.v }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+            <button onClick="{{ scheduleFromChild }}" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#E4720C;color:#fff;border:none;border-radius:14px;padding:14px;font-family:inherit;font-weight:600;font-size:.9rem;cursor:pointer;min-height:50px" style-hover="background:#C9640A">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Schedule hearing
+            </button>
+            <button onClick="{{ noop }}" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:#2B2622;border:1.5px solid #EAE1D3;border-radius:14px;padding:14px;font-family:inherit;font-weight:600;font-size:.9rem;cursor:pointer;min-height:50px" style-hover="border-color:#C9BFB0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-3M18 20v-9"/><path d="M4 12l5-5 4 3 6-7"/></svg>Update status
+            </button>
+          </div>
+
+          <div style="font-family:'Bricolage Grotesque';font-weight:600;font-size:1.05rem;margin-bottom:16px">Case timeline</div>
+          <div style="position:relative;padding-left:26px">
+            <div style="position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:#EAE1D3"></div>
+            <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="4">
+              <div style="position:relative;padding-bottom:20px">
+                <span style="position:absolute;left:-24px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid {{ t.dot }}"></span>
+                <div style="font-size:.72rem;color:#A79D8F;font-weight:600">{{ t.date }}</div>
+                <div style="font-weight:600;font-size:.92rem;color:#2B2622;margin-top:2px">{{ t.title }}</div>
+                <div style="font-size:.84rem;color:#6B6259;margin-top:3px;line-height:1.45">{{ t.desc }}</div>
+                <div style="font-size:.72rem;color:#A79D8F;margin-top:5px">{{ t.by }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- HEARINGS LIST -->
+      <sc-if value="{{ isHearings }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <sc-for list="{{ hearingTabs }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.pick }}" style="flex:1;border:1.5px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};border-radius:12px;padding:10px 6px;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ hearings }}" as="h" hint-placeholder-count="4">
+              <div style="background:#fff;border:1px solid #EEE6D8;border-radius:16px;padding:15px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                  <div style="min-width:0">
+                    <div style="font-weight:600;font-size:.98rem;color:#2B2622">{{ h.childName }}</div>
+                    <div style="font-size:.79rem;color:#8A8175;margin-top:2px">{{ h.code }}</div>
+                  </div>
+                  <span style="flex-shrink:0;font-size:.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:{{ h.fg }};background:{{ h.bg }};padding:4px 10px;border-radius:999px">{{ h.statusLabel }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:12px;color:#6B6259;font-size:.82rem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>{{ h.dateLabel }}
+                </div>
+                <div style="font-size:.82rem;color:#6B6259;margin-top:8px;line-height:1.45">{{ h.notes }}</div>
+                <button onClick="{{ h.open }}" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;background:{{ h.btnBg }};color:{{ h.btnFg }};border:1.5px solid {{ h.btnBorder }};border-radius:12px;padding:12px;font-family:inherit;font-weight:600;font-size:.88rem;cursor:pointer;min-height:48px">
+                  <span dangerouslySetInnerHTML="{{ h.btnIcon }}"></span>{{ h.btnLabel }}
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- HEARING CONSOLE -->
+      <sc-if value="{{ isConsole }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="background:#fff;border:1px solid #EEE6D8;border-radius:16px;padding:15px;margin-bottom:16px;display:flex;gap:13px;align-items:center">
+            <span style="width:46px;height:46px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:700;background:{{ hearing.avBg }};color:{{ hearing.avFg }}">{{ hearing.initials }}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:.98rem">{{ hearing.childName }}</div>
+              <div style="font-size:.79rem;color:#8A8175;margin-top:2px">{{ hearing.code }} · {{ hearing.dateLabel }}</div>
+            </div>
+          </div>
+
+          <!-- Step 1: capture -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="width:22px;height:22px;border-radius:50%;background:#E4720C;color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center">1</span>
+            <span style="font-family:'Bricolage Grotesque';font-weight:600;font-size:.98rem">Capture proceedings</span>
+          </div>
+          <div style="background:#fff;border:1px solid #EEE6D8;border-radius:18px;padding:18px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <span style="font-size:.78rem;color:#8A8175;font-weight:600">Language</span>
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ langs }}" as="l" hint-placeholder-count="3">
+                  <button onClick="{{ l.pick }}" style="border:1.5px solid {{ l.border }};background:{{ l.bg }};color:{{ l.fg }};border-radius:999px;padding:6px 12px;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer">{{ l.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <sc-if value="{{ recIdle }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;align-items:center;padding:14px 0 6px">
+                <button onClick="{{ startRec }}" aria-label="Start recording" style="width:76px;height:76px;border-radius:50%;background:#C24A3A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(194,74,58,.35)" style-hover="background:#AD3F30">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/></svg>
+                </button>
+                <div style="font-size:.82rem;color:#8A8175;margin-top:12px">Tap to record the hearing</div>
+                <div style="display:flex;align-items:center;gap:10px;width:100%;margin:16px 0 4px"><div style="flex:1;height:1px;background:#EEE6D8"></div><span style="font-size:.72rem;color:#B3A897">or</span><div style="flex:1;height:1px;background:#EEE6D8"></div></div>
+                <button onClick="{{ uploadRec }}" style="display:flex;align-items:center;gap:8px;background:transparent;border:1.5px dashed #D8CDBB;border-radius:12px;padding:11px 16px;font-family:inherit;font-weight:600;font-size:.85rem;color:#6B6259;cursor:pointer" style-hover="border-color:#E4720C;color:#C25B0A">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Upload audio file
+                </button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ recActive }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0 6px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                  <span style="width:11px;height:11px;border-radius:50%;background:#C24A3A;animation:bk-blink 1s infinite"></span>
+                  <span style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1.7rem;letter-spacing:.02em;font-variant-numeric:tabular-nums">{{ recTime }}</span>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:3px;height:34px;margin-bottom:20px" dangerouslySetInnerHTML="{{ waveform }}"></div>
+                <div style="display:flex;gap:12px">
+                  <button onClick="{{ cancelRec }}" style="width:54px;height:54px;border-radius:50%;background:#fff;border:1.5px solid #EAE1D3;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8A8175" style-hover="border-color:#C24A3A;color:#C24A3A"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+                  <button onClick="{{ stopRec }}" style="width:64px;height:64px;border-radius:50%;background:#C24A3A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;animation:bk-pulse 1.6s infinite"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+                </div>
+                <div style="font-size:.8rem;color:#8A8175;margin-top:14px">Recording · tap ■ to finish</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ recDone }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#F7F2E9;border:1px solid #EDE4D6;border-radius:12px;padding:13px;display:flex;align-items:center;gap:12px">
+                <span style="width:40px;height:40px;border-radius:10px;background:#EBF1EC;color:#4B7A5B;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.88rem">{{ audioName }}</div><div style="font-size:.76rem;color:#8A8175;margin-top:2px">{{ audioMeta }}</div></div>
+                <button onClick="{{ resetRec }}" aria-label="Remove" style="border:none;background:transparent;cursor:pointer;color:#A79D8F;padding:6px" style-hover="color:#C24A3A"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- Step 2: transcript -->
+          <sc-if value="{{ showTranscriptStep }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span style="width:22px;height:22px;border-radius:50%;background:#E4720C;color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center">2</span>
+                <span style="font-family:'Bricolage Grotesque';font-weight:600;font-size:.98rem">Review transcript</span>
+                <sc-if value="{{ transcribing }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:.76rem;color:#C25B0A;font-weight:600;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#E4720C;animation:bk-blink .9s infinite"></span>Transcribing…</span></sc-if>
+              </div>
+              <div style="background:#fff;border:1px solid #EEE6D8;border-radius:18px;padding:16px;margin-bottom:20px">
+                <div style="font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#A79D8F;margin-bottom:8px">Verbatim record · संवाद</div>
+                <div style="font-family:'Noto Sans Devanagari','Hanken Grotesk',sans-serif;font-size:1rem;line-height:1.75;color:#2B2622;min-height:96px;white-space:pre-wrap">{{ transcriptDisplay }}<sc-if value="{{ transcribing }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;width:2px;height:1.1em;background:#E4720C;vertical-align:text-bottom;margin-left:1px;animation:bk-caret .8s step-end infinite"></span></sc-if></div>
+                <sc-if value="{{ transcriptReady }}" hint-placeholder-val="{{ false }}">
+                  <div style="border-top:1px solid #F0E9DC;margin-top:14px;padding-top:14px">
+                    <div style="font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#A79D8F;margin-bottom:6px">Edit &amp; correct</div>
+                    <textarea onInput="{{ editTranscript }}" style="width:100%;min-height:110px;border:1px solid #EAE1D3;border-radius:12px;padding:12px;font-family:'Noto Sans Devanagari','Hanken Grotesk',sans-serif;font-size:.95rem;line-height:1.7;color:#2B2622;resize:vertical;outline:none;background:#FBF8F2">{{ editedValue }}</textarea>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- Step 3: order -->
+          <sc-if value="{{ transcriptReady }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span style="width:22px;height:22px;border-radius:50%;background:#E4720C;color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center">3</span>
+                <span style="font-family:'Bricolage Grotesque';font-weight:600;font-size:.98rem">Issue order</span>
+              </div>
+              <sc-if value="{{ orderPending }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ genOrder }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;background:#E4720C;color:#fff;border:none;border-radius:14px;padding:16px;font-family:inherit;font-weight:700;font-size:.95rem;cursor:pointer;min-height:54px;box-shadow:0 6px 16px rgba(228,114,12,.28)" style-hover="background:#C9640A">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13l2 2 4-4"/></svg>Draft order from transcript
+                </button>
+                <p style="text-align:center;font-size:.76rem;color:#A79D8F;margin:10px 0 0">A structured CWC order is drafted for your review before signing.</p>
+              </sc-if>
+              <sc-if value="{{ orderMade }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#fff;border:1px solid #EEE6D8;border-radius:18px;overflow:hidden">
+                  <div style="background:#2B2622;color:#FBF8F2;padding:16px 18px">
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                      <div style="font-family:'Bricolage Grotesque';font-weight:700;font-size:1rem">Child Welfare Committee</div>
+                      <span style="font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(75,122,91,.3);color:#B8DBC2;padding:3px 9px;border-radius:6px">Draft</span>
+                    </div>
+                    <div style="font-size:.76rem;color:#C9A98C;margin-top:3px">{{ district }} · Order No. {{ orderNo }}</div>
+                  </div>
+                  <div style="padding:18px">
+                    <div style="font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#A79D8F">In the matter of</div>
+                    <div style="font-weight:600;font-size:.95rem;margin:3px 0 14px">{{ hearing.childName }} ({{ hearing.code }})</div>
+                    <div style="font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#A79D8F">Findings</div>
+                    <div style="font-family:'Noto Sans Devanagari','Hanken Grotesk',sans-serif;font-size:.9rem;line-height:1.65;color:#3A322A;margin:4px 0 14px">{{ orderFindings }}</div>
+                    <div style="font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#A79D8F">Direction</div>
+                    <div style="font-size:.9rem;line-height:1.6;color:#3A322A;margin-top:4px">{{ orderDirection }}</div>
+                  </div>
+                  <div style="display:flex;gap:10px;padding:0 18px 18px">
+                    <button onClick="{{ noop }}" style="flex:1;background:#E4720C;color:#fff;border:none;border-radius:12px;padding:13px;font-family:inherit;font-weight:600;font-size:.88rem;cursor:pointer;min-height:48px" style-hover="background:#C9640A">Sign &amp; issue</button>
+                    <button onClick="{{ noop }}" style="background:#fff;color:#6B6259;border:1.5px solid #EAE1D3;border-radius:12px;padding:13px 16px;font-family:inherit;font-weight:600;font-size:.88rem;cursor:pointer;min-height:48px" style-hover="border-color:#C9BFB0">PDF</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ALERTS -->
+      <sc-if value="{{ isAlerts }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px">
+            <sc-for list="{{ urgencyFilters }}" as="u" hint-placeholder-count="4">
+              <button onClick="{{ u.pick }}" style="flex-shrink:0;border:1.5px solid {{ u.border }};background:{{ u.bg }};color:{{ u.fg }};border-radius:999px;padding:8px 14px;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">{{ u.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="6">
+              <div onClick="{{ a.open }}" style="display:flex;gap:13px;background:#fff;border:1px solid #EEE6D8;border-left:4px solid {{ a.rail }};border-radius:14px;padding:14px;cursor:pointer" style-hover="border-color:#DDD2C0">
+                <span style="width:38px;height:38px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ a.tintBg }};color:{{ a.rail }}" dangerouslySetInnerHTML="{{ a.icon }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span style="font-weight:600;font-size:.92rem;color:#2B2622">{{ a.title }}</span>
+                    <span style="font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:{{ a.rail }};background:{{ a.tintBg }};padding:2px 7px;border-radius:6px">{{ a.tag }}</span>
+                  </div>
+                  <div style="font-size:.84rem;color:#6B6259;margin-top:4px;line-height:1.45">{{ a.desc }}</div>
+                  <div style="font-size:.74rem;color:#A79D8F;margin-top:7px">{{ a.when }}</div>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9BFB0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;align-self:center"><path d="M9 6l6 6-6 6"/></svg>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+
+    <nav style="position:sticky;bottom:0;z-index:20;background:rgba(251,248,242,.94);backdrop-filter:blur(10px);border-top:1px solid #EDE4D6;display:flex;padding:8px 8px calc(8px + env(safe-area-inset-bottom))">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="4">
+        <button onClick="{{ n.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:transparent;border:none;cursor:pointer;padding:8px 4px;min-height:52px;color:{{ n.color }};font-family:inherit">
+          <span dangerouslySetInnerHTML="{{ n.icon }}"></span>
+          <span style="font-size:.68rem;font-weight:600">{{ n.label }}</span>
+        </button>
+      </sc-for>
+    </nav>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:932},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;login&quot;,&quot;dashboard&quot;,&quot;children&quot;,&quot;hearings&quot;,&quot;hearing-console&quot;,&quot;alerts&quot;],&quot;default&quot;:&quot;login&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;liveTranscription&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Demo&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const start = (props && props.startScreen) || 'login';
+    this.state = {
+      screen: start === 'login' ? 'login' : start,
+      role: start === 'login' ? null : { name: 'A. Deshmukh', title: 'DCPU Officer' },
+      childQ: '', childStatus: '', activeChildId: 'c1', activeHearingId: 'h1',
+      hearingFilter: 'upcoming', lang: 'hi',
+      rec: 'idle', recSecs: 0, transcript: '', edited: '', transcribing: false, orderMade: false,
+      urgency: '',
+    };
+    this._recTimer = null; this._txTimer = null;
+  }
+
+  // ---- static data ----
+  DISTRICT = 'Indore';
+  ROLES = [
+    { id: 'cwc', title: 'CWC Chairperson', sub: 'Conduct hearings, issue orders', icon: this._svg('M12 3v18M5 8h14M7 8l-2 6a3 3 0 0 0 6 0l-2-6M17 8l-2 6a3 3 0 0 0 6 0l-2-6') },
+    { id: 'dcpu', title: 'DCPU Officer', sub: 'Track cases across the district', icon: this._svg('M3 3v18h18M7 14l3-4 3 2 4-6') },
+    { id: 'cci', title: 'CCI Staff', sub: 'Register & update children in care', icon: this._svg('M12 3l7 3v5c0 4.4-3 7.5-7 9-4-1.5-7-4.6-7-9V6l7-3z') },
+    { id: 'wcd', title: 'WCD / State', sub: 'Monitor outcomes statewide', icon: this._svg('M3 21h18M6 21V9l6-4 6 4v12M10 21v-5h4v5') },
+  ];
+  STATUS = {
+    under_inquiry:      { label: 'Under Inquiry',      color: '#E4720C', fg: '#C25B0A', bg: '#FBEFE2' },
+    care_protection:    { label: 'Care & Protection',  color: '#C8891A', fg: '#B07E14', bg: '#FBF0DA' },
+    conflict_law:       { label: 'Conflict with Law',  color: '#C24A3A', fg: '#B23A2C', bg: '#F7E3DF' },
+    restored:           { label: 'Restored',           color: '#4B7A5B', fg: '#3E6A4D', bg: '#E8F0E9' },
+    adopted:            { label: 'Adopted',            color: '#7B5EA7', fg: '#6A4E96', bg: '#EFEAF6' },
+    foster:             { label: 'Foster Care',        color: '#3E7C8C', fg: '#356E7D', bg: '#E4F0F2' },
+    aftercare:          { label: 'Aftercare',          color: '#8A8175', fg: '#6B6259', bg: '#F1ECE3' },
+  };
+  CHILDREN = [
+    { id:'c1', code:'IND-2023-0417', name:'Rohan (name changed)', age:9, gender:'Male', cci:'Snehalaya, Indore', admitted:'12 Mar 2023', category:'Abandoned', status:'under_inquiry', lfa:false },
+    { id:'c2', code:'IND-2021-0088', name:'Aarti', age:6, gender:'Female', cci:'Bal Niketan, Mhow', admitted:'04 Jan 2021', category:'Orphan', status:'care_protection', lfa:true },
+    { id:'c3', code:'IND-2022-0233', name:'Sameer', age:15, gender:'Male', cci:'Observation Home, Indore', admitted:'19 Aug 2022', category:'In conflict', status:'conflict_law', lfa:false },
+    { id:'c4', code:'IND-2020-0012', name:'Priya', age:4, gender:'Female', cci:'Snehalaya, Indore', admitted:'22 Nov 2020', category:'Surrendered', status:'restored', lfa:false },
+    { id:'c5', code:'IND-2019-0301', name:'Kabir', age:11, gender:'Male', cci:'Bal Niketan, Mhow', admitted:'08 Jul 2019', category:'Orphan', status:'care_protection', lfa:true },
+    { id:'c6', code:'IND-2023-0512', name:'Meena', age:2, gender:'Female', cci:'Snehalaya, Indore', admitted:'30 Sep 2023', category:'Abandoned', status:'foster', lfa:false },
+    { id:'c7', code:'IND-2018-0145', name:'Arjun', age:17, gender:'Male', cci:'Aftercare Home, Indore', admitted:'14 Feb 2018', category:'Orphan', status:'aftercare', lfa:false },
+  ];
+  HISTORY = {
+    c1: [
+      { date:'12 Mar 2023', title:'Produced before CWC', desc:'Child produced by CWPO after being found unaccompanied at Indore railway station.', by:'CWPO R. Singh', dot:'#E4720C' },
+      { date:'18 Mar 2023', title:'Admitted to CCI', desc:'Placed at Snehalaya, Indore pending social investigation.', by:'CCI Snehalaya', dot:'#C8891A' },
+      { date:'02 Apr 2023', title:'Social Investigation Report', desc:'SIR submitted; family untraceable. Age estimated at 9 years.', by:'DCPU', dot:'#3E7C8C' },
+      { date:'21 Sep 2023', title:'Review hearing due', desc:'Quarterly review overdue by 34 days — flagged for scheduling.', by:'System', dot:'#C24A3A' },
+    ],
+    c2: [
+      { date:'04 Jan 2021', title:'Produced before CWC', desc:'Both parents deceased; produced by relatives unable to provide care.', by:'CWPO', dot:'#E4720C' },
+      { date:'10 Jan 2021', title:'Admitted to CCI', desc:'Placed at Bal Niketan, Mhow.', by:'CCI Bal Niketan', dot:'#C8891A' },
+      { date:'15 Feb 2022', title:'Declared legally free', desc:'CWC declared child legally free for adoption under Sec. 38.', by:'CWC Indore', dot:'#4B7A5B' },
+      { date:'—', title:'Awaiting CARINGS listing', desc:'LFA order passed but not yet uploaded to CARINGS. Action pending with SAA.', by:'System', dot:'#C24A3A' },
+    ],
+  };
+  HEARINGS = [
+    { id:'h1', childId:'c1', childName:'Rohan (name changed)', code:'IND-2023-0417', date:'Tomorrow, 11:00 AM', status:'scheduled', notes:'Overdue quarterly review. SIR to be examined; consider placement continuation.', when:'upcoming' },
+    { id:'h2', childId:'c2', childName:'Aarti', code:'IND-2021-0088', date:'23 Jun, 10:30 AM', status:'scheduled', notes:'Follow-up on CARINGS listing delay for LFA-declared child.', when:'upcoming' },
+    { id:'h3', childId:'c5', childName:'Kabir', code:'IND-2019-0301', date:'19 Jun, 2:00 PM', status:'in_progress', notes:'Adoption suitability review in progress.', when:'upcoming' },
+    { id:'h4', childId:'c4', childName:'Priya', code:'IND-2020-0012', date:'02 Jun, 11:00 AM', status:'completed', notes:'Restoration to biological family approved. Order issued.', when:'past' },
+  ];
+  HSTATUS = {
+    scheduled:   { label:'Scheduled',   fg:'#C25B0A', bg:'#FBEFE2' },
+    in_progress: { label:'In progress', fg:'#B07E14', bg:'#FBF0DA' },
+    completed:   { label:'Completed',   fg:'#3E6A4D', bg:'#E8F0E9' },
+  };
+  ALERTS = [
+    { id:'a1', childId:'c1', urgency:'red', tag:'Overdue', title:'Review overdue — 34 days', desc:'Rohan (IND-2023-0417) has not had a mandated quarterly review since Jun 2023.', when:'Flagged 21 Sep' },
+    { id:'a2', childId:'c2', urgency:'red', tag:'Blocked', title:'LFA child not on CARINGS', desc:'Aarti declared legally free 15 months ago but still not listed for adoption.', when:'Flagged 12 Jun' },
+    { id:'a3', childId:'c7', urgency:'amber', tag:'Aging out', title:'Turns 18 in 41 days', desc:'Arjun needs an aftercare & rehabilitation plan before exit.', when:'Due 08 Aug' },
+    { id:'a4', childId:'c5', urgency:'amber', tag:'Due soon', title:'Adoption review due', desc:'Kabir\u2019s suitability review is due within 7 days.', when:'Due 26 Jun' },
+    { id:'a5', childId:'c3', urgency:'amber', tag:'ICJ', title:'Bail disposition pending', desc:'Sameer\u2019s inquiry has exceeded 3 months; disposition required.', when:'Due 30 Jun' },
+    { id:'a6', childId:'c6', urgency:'green', tag:'On track', title:'Foster placement stable', desc:'Meena\u2019s foster review completed; next check in 60 days.', when:'Done 10 Jun' },
+  ];
+  URG = {
+    red:   { rail:'#C24A3A', tintBg:'#F7E3DF', icon:this._svg('M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z') },
+    amber: { rail:'#C8891A', tintBg:'#FBF0DA', icon:this._svg('M12 8v4l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z') },
+    green: { rail:'#4B7A5B', tintBg:'#E8F0E9', icon:this._svg('M20 6L9 17l-5-5') },
+  };
+  MOCK_TX = 'बालक को दिनांक 12 मार्च 2023 को बाल कल्याण समिति के समक्ष प्रस्तुत किया गया। बालक की अनुमानित आयु 9 वर्ष आंकी गई है। बालक ने बताया कि उसे अपने माता-पिता के विषय में कोई जानकारी नहीं है। समिति ने जिला बाल संरक्षण इकाई को सामाजिक जांच रिपोर्ट प्रस्तुत करने का निर्देश दिया। अगली सुनवाई तक बालक को स्नेहालय, इंदौर में रखने का आदेश दिया जाता है।';
+
+  _svg(d, w) {
+    return { __html: '<svg width="'+(w||18)+'" height="'+(w||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>' };
+  }
+  _h(s) { return { __html: s }; }
+  _initials(name) {
+    const clean = name.replace(/\s*\(.*?\)\s*/g, '').trim();
+    const p = clean.split(' ');
+    return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
+  }
+  _avatar(id) {
+    const palettes = [['#FBEFE2','#C25B0A'],['#E8F0E9','#3E6A4D'],['#E4F0F2','#356E7D'],['#EFEAF6','#6A4E96'],['#FBF0DA','#B07E14']];
+    const n = parseInt(id.replace(/\D/g,'')||'0',10);
+    return palettes[n % palettes.length];
+  }
+
+  componentWillUnmount() { clearInterval(this._recTimer); clearInterval(this._txTimer); }
+
+  // ---- nav ----
+  go = (s) => this.setState({ screen: s });
+  openChild = (id) => this.setState({ screen: 'child-detail', activeChildId: id });
+  openConsole = (id) => { this._resetConsole(); this.setState({ screen: 'hearing-console', activeHearingId: id }); };
+  openAlert = (al) => { if (al.childId) this.openChild(al.childId); };
+  back = () => {
+    const s = this.state.screen;
+    if (s === 'child-detail') this.setState({ screen: 'children' });
+    else if (s === 'hearing-console') this.setState({ screen: 'hearings' });
+    else this.setState({ screen: 'dashboard' });
+  };
+  logout = () => { this._resetConsole(); this.setState({ screen: 'login', role: null }); };
+  login = (r) => this.setState({ screen: 'dashboard', role: { name: 'A. Deshmukh', title: r.title } });
+
+  // ---- console flow ----
+  _resetConsole() { clearInterval(this._recTimer); clearInterval(this._txTimer); this.setState({ rec:'idle', recSecs:0, transcript:'', edited:'', transcribing:false, orderMade:false }); }
+  startRec = () => {
+    this.setState({ rec:'active', recSecs:0 });
+    this._recTimer = setInterval(() => this.setState(s => ({ recSecs: s.recSecs + 1 })), 1000);
+  };
+  stopRec = () => { clearInterval(this._recTimer); this.setState({ rec:'done', audioLabel:'Hearing recording' }); this._runTranscription(); };
+  cancelRec = () => { clearInterval(this._recTimer); this.setState({ rec:'idle', recSecs:0 }); };
+  uploadRec = () => { this.setState({ rec:'done', recSecs:214, audioLabel:'hearing_12mar.m4a' }); this._runTranscription(); };
+  resetRec = () => this._resetConsole();
+
+  _runTranscription() {
+    if (this.props.liveTranscription === false) {
+      this.setState({ transcript: this.MOCK_TX, edited: this.MOCK_TX, transcribing: false });
+      return;
+    }
+    this.setState({ transcribing: true, transcript: '' });
+    const words = this.MOCK_TX.split(' ');
+    let i = 0;
+    this._txTimer = setInterval(() => {
+      i++;
+      const t = words.slice(0, i).join(' ');
+      if (i >= words.length) {
+        clearInterval(this._txTimer);
+        this.setState({ transcript: t, edited: t, transcribing: false });
+      } else {
+        this.setState({ transcript: t });
+      }
+    }, 90);
+  }
+  editTranscript = (e) => this.setState({ edited: e.target.value });
+  genOrder = () => this.setState({ orderMade: true });
+
+  setChildQ = (e) => this.setState({ childQ: e.target.value });
+  pickStatus = (v) => this.setState({ childStatus: v });
+  pickLang = (v) => this.setState({ lang: v });
+  pickHearingFilter = (v) => this.setState({ hearingFilter: v });
+  pickUrgency = (v) => this.setState({ urgency: v });
+  noop = () => {};
+
+  renderVals() {
+    const st = this.state;
+    const screen = st.screen;
+    const role = st.role || { name: 'Guest', title: '' };
+
+    // status legend / donut
+    const counts = {};
+    this.CHILDREN.forEach(c => { counts[c.status] = (counts[c.status]||0)+1; });
+    const total = this.CHILDREN.length;
+    const legendOrder = ['under_inquiry','care_protection','conflict_law','foster','restored','adopted','aftercare'];
+    const statusLegend = legendOrder.filter(k => counts[k]).map(k => ({ label:this.STATUS[k].label, color:this.STATUS[k].color, count:counts[k] }));
+    let cum = 0; const segs = [];
+    statusLegend.forEach(s => { const pct = s.count/total*100; segs.push(`${s.color} ${cum}% ${cum+pct}%`); cum += pct; });
+    const donutGradient = `conic-gradient(${segs.join(',')})`;
+
+    const kpi = {
+      total,
+      pending: 5,
+      overdue: this.ALERTS.filter(a => a.urgency==='red').length,
+      lfa: this.CHILDREN.filter(c => c.lfa).length,
+      hearings: this.HEARINGS.filter(h => h.when==='upcoming').length,
+    };
+
+    const decorateAlert = (a) => ({
+      title:a.title, desc:a.desc, when:a.when, tag:a.tag,
+      rail:this.URG[a.urgency].rail, tintBg:this.URG[a.urgency].tintBg, icon:this.URG[a.urgency].icon,
+      open:() => this.openAlert(a),
+    });
+
+    // children list
+    const q = st.childQ.trim().toLowerCase();
+    const children = this.CHILDREN.filter(c => {
+      if (st.childStatus && c.status !== st.childStatus) return false;
+      if (q && !(c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))) return false;
+      return true;
+    }).map(c => {
+      const av = this._avatar(c.id); const s = this.STATUS[c.status];
+      return { name:c.name, code:c.code, cci:c.cci, lfa:c.lfa, initials:this._initials(c.name),
+        ageLabel:c.age+' yrs', avBg:av[0], avFg:av[1], statusLabel:s.label, statusFg:s.fg, statusBg:s.bg,
+        open:() => this.openChild(c.id) };
+    });
+    const statusChipDefs = [['','All'],['under_inquiry','Under inquiry'],['care_protection','Care & protection'],['conflict_law','Conflict w/ law'],['restored','Restored'],['foster','Foster'],['aftercare','Aftercare']];
+    const statusChips = statusChipDefs.map(([v,label]) => {
+      const on = st.childStatus === v;
+      return { label, pick:() => this.pickStatus(v), border: on?'#E4720C':'#EAE1D3', bg: on?'#FBEFE2':'#fff', fg: on?'#C25B0A':'#6B6259' };
+    });
+
+    // child detail
+    const cd = this.CHILDREN.find(c => c.id === st.activeChildId) || this.CHILDREN[0];
+    const cdAv = this._avatar(cd.id); const cds = this.STATUS[cd.status];
+    const child = { name:cd.name, code:cd.code, lfa:cd.lfa, initials:this._initials(cd.name),
+      avBg:cdAv[0], avFg:cdAv[1], statusLabel:cds.label, statusFg:cds.fg, statusBg:cds.bg };
+    const childFacts = [
+      { k:'Age', v:cd.age+' years' }, { k:'Gender', v:cd.gender },
+      { k:'Category', v:cd.category }, { k:'Admitted', v:cd.admitted },
+      { k:'Current CCI', v:cd.cci }, { k:'Legal status', v:cds.label },
+    ];
+    const timeline = (this.HISTORY[cd.id] || this.HISTORY.c1);
+
+    // hearings
+    const hearings = this.HEARINGS.filter(h => h.when === st.hearingFilter).map(h => {
+      const s = this.HSTATUS[h.status]; const av = this._avatar(h.childId);
+      const done = h.status === 'completed';
+      return { childName:h.childName, code:h.code, dateLabel:h.date, notes:h.notes, statusLabel:s.label, fg:s.fg, bg:s.bg,
+        open:() => this.openConsole(h.id),
+        btnLabel: done ? 'View order' : 'Open hearing console',
+        btnIcon: done ? this._svg('M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',16) : this._svg('M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3',16),
+        btnBg: done ? '#fff' : '#2B2622', btnFg: done ? '#6B6259' : '#FBF8F2', btnBorder: done ? '#EAE1D3' : '#2B2622' };
+    });
+    const hearingTabs = [['upcoming','Upcoming'],['past','Completed']].map(([v,label]) => {
+      const on = st.hearingFilter === v;
+      return { label, pick:() => this.pickHearingFilter(v), border:on?'#2B2622':'#EAE1D3', bg:on?'#2B2622':'#fff', fg:on?'#FBF8F2':'#6B6259' };
+    });
+
+    // console
+    const hRec = this.HEARINGS.find(h => h.id === st.activeHearingId) || this.HEARINGS[0];
+    const hAv = this._avatar(hRec.childId);
+    const hearing = { childName:hRec.childName, code:hRec.code, dateLabel:hRec.date, initials:this._initials(hRec.childName), avBg:hAv[0], avFg:hAv[1] };
+    const mm = String(Math.floor(st.recSecs/60)).padStart(2,'0'); const ss = String(st.recSecs%60).padStart(2,'0');
+    const langs = [['hi','हिन्दी'],['en','English'],['mr','मराठी']].map(([v,label]) => {
+      const on = st.lang === v;
+      return { label, pick:() => this.pickLang(v), border:on?'#E4720C':'#EAE1D3', bg:on?'#FBEFE2':'#fff', fg:on?'#C25B0A':'#6B6259' };
+    });
+    const bars = [14,22,30,18,26,12,20,28,16,24,10,20,26,14,22];
+    const waveform = bars.map((h,i) => `<span style="width:3px;height:${h}px;border-radius:2px;background:#C24A3A;opacity:${0.4+((i%5)*0.12)};animation:bk-blink ${0.7+(i%4)*0.18}s ease-in-out ${i*0.05}s infinite"></span>`).join('');
+    const audioName = st.audioLabel || 'Hearing recording';
+    const audioMeta = `${mm}:${ss} · ${st.lang==='hi'?'हिन्दी':st.lang==='mr'?'मराठी':'English'} · ready to transcribe`;
+
+    const transcriptReady = !!st.transcript && !st.transcribing;
+    const orderFindings = 'बालक की आयु 9 वर्ष आंकी गई; माता-पिता अज्ञात एवं अनुरेखणीय। सामाजिक जांच रिपोर्ट के अनुसार परिवार का पता नहीं चल सका।';
+    const orderDirection = 'Child to remain at Snehalaya, Indore pending completion of inquiry. DCPU directed to intensify family tracing. Next review listed within 3 months.';
+
+    // nav
+    const activeTab = (screen==='child-detail') ? 'children' : (screen==='hearing-console') ? 'hearings' : screen;
+    const navDefs = [
+      ['dashboard','Home','M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10'],
+      ['children','Children','M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M17 11a3 3 0 1 0-1.5-5.6M15.5 14.2A6 6 0 0 1 21 20'],
+      ['hearings','Hearings','M12 3v18M5 8h14M7 8l-2 6a3 3 0 0 0 6 0l-2-6M17 8l-2 6a3 3 0 0 0 6 0l-2-6'],
+      ['alerts','Alerts','M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0'],
+    ];
+    const navItems = navDefs.map(([id,label,d]) => {
+      const on = activeTab === id;
+      return { label, go:() => this.go(id), color: on ? '#C25B0A' : '#A79D8F',
+        icon: { __html: `<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${on?2.1:1.8}" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>` } };
+    });
+
+    const titles = {
+      dashboard:['Dashboard', role.title+' · '+this.DISTRICT],
+      children:['Children', 'District register'],
+      'child-detail':['Case file', child.code],
+      hearings:['Hearings', 'CWC schedule'],
+      'hearing-console':['Hearing console', hearing.childName],
+      alerts:['Needs attention', 'Alerts & deadlines'],
+    };
+    const t = titles[screen] || ['BalKawach',''];
+
+    const urgencyFilters = [['','All'],['red','Overdue'],['amber','Due soon'],['green','On track']].map(([v,label]) => {
+      const on = st.urgency === v;
+      const c = v ? this.URG[v] : null;
+      return { label, pick:() => this.pickUrgency(v), border: on ? (c?c.rail:'#2B2622') : '#EAE1D3', bg: on ? (c?c.tintBg:'#2B2622') : '#fff', fg: on ? (c?c.rail:'#FBF8F2') : '#6B6259' };
+    });
+    const alerts = this.ALERTS.filter(a => !st.urgency || a.urgency === st.urgency).map(decorateAlert);
+
+    return {
+      isLogin: screen === 'login',
+      isApp: screen !== 'login',
+      isDashboard: screen === 'dashboard',
+      isChildren: screen === 'children',
+      isChildDetail: screen === 'child-detail',
+      isHearings: screen === 'hearings',
+      isConsole: screen === 'hearing-console',
+      isAlerts: screen === 'alerts',
+      showBack: ['child-detail','hearing-console'].includes(screen),
+      showChrome: screen !== 'login',
+      screenTitle: t[0], screenSub: t[1],
+      district: this.DISTRICT,
+      userInitials: (role.name||'A D').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase(),
+
+      roles: this.ROLES.map(r => ({ ...r, pick:() => this.login(r) })),
+      login: this.login, logout: this.logout, back: this.back, noop: this.noop, goAlerts:() => this.go('alerts'),
+
+      kpi, donutGradient, statusLegend,
+      topAlerts: this.ALERTS.filter(a => a.urgency !== 'green').slice(0,3).map(decorateAlert),
+
+      children, childCount: children.length + (children.length === 1 ? ' child' : ' children'),
+      childQ: st.childQ, setChildQ: this.setChildQ, statusChips,
+
+      child, childFacts, timeline, scheduleFromChild:() => this.go('hearings'),
+
+      hearings, hearingTabs,
+
+      hearing, langs, recTime: `${mm}:${ss}`, waveform: this._h(waveform),
+      recIdle: st.rec === 'idle', recActive: st.rec === 'active', recDone: st.rec === 'done',
+      startRec:this.startRec, stopRec:this.stopRec, cancelRec:this.cancelRec, uploadRec:this.uploadRec, resetRec:this.resetRec,
+      audioName, audioMeta,
+      showTranscriptStep: st.rec === 'done',
+      transcribing: st.transcribing, transcriptDisplay: st.transcript, transcriptReady,
+      editTranscript: this.editTranscript, editedValue: st.edited,
+      orderPending: !st.orderMade, orderMade: st.orderMade, genOrder: this.genOrder,
+      orderNo: 'CWC/IND/2024/0417', orderFindings, orderDirection,
+
+      navItems, urgencyFilters, alerts,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,760 @@
+/* ===== Hearings Container ===== */
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  min-height: 0;
+}
+
+/* ===== View A: Hearings List ===== */
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 16px 0;
+  padding-bottom: 24px;
+}
+
+.listHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(43, 38, 34, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 12px 48px rgba(43, 38, 34, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modalHeader h3 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.2rem;
+  color: var(--text, #2B2622);
+  margin-bottom: 4px;
+}
+
+.modalHeader p {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6B6259);
+}
+
+/* Custom Combobox */
+.comboboxContainer {
+  position: relative;
+  width: 100%;
+}
+
+.comboboxInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text, #2B2622);
+  background: var(--bg, #FBF8F2);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.comboboxInput:focus {
+  border-color: var(--accent, #E4720C);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(228, 114, 12, 0.1);
+}
+
+.comboboxList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(43, 38, 34, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 4px;
+}
+
+.comboboxItem {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.2s;
+}
+
+.comboboxItem:hover {
+  background: var(--bg, #FBF8F2);
+}
+
+.comboboxItem.selected {
+  background: rgba(228, 114, 12, 0.08);
+  border: 1px solid rgba(228, 114, 12, 0.2);
+}
+
+.comboboxItemName {
+  font-weight: 600;
+  color: var(--text, #2B2622);
+  font-size: 0.95rem;
+}
+
+.comboboxItemCode {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6B6259);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.comboboxEmpty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-secondary, #6B6259);
+  font-size: 0.85rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btnCancel {
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 8px;
+  color: var(--text-secondary, #6B6259);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnCancel:hover {
+  background: var(--bg, #FBF8F2);
+}
+
+.btnSubmit {
+  padding: 10px 16px;
+  background: var(--accent, #E4720C);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--primary);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.listHeader h2 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text, #2B2622);
+  letter-spacing: -0.02em;
+}
+
+.listHeader p {
+  color: var(--text-secondary, #6B6259);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Clean Segmented Control for Tabs */
+.filterTabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  max-width: 600px; /* Prevent stretching on ultra-wide desktop */
+}
+
+.filterTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.filterTab {
+  flex: 1;
+  text-align: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #6B6259);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.filterTab:hover {
+  color: var(--text, #2B2622);
+}
+
+.filterTabActive {
+  background: #FFFFFF;
+  color: var(--text, #2B2622);
+  box-shadow: 0 2px 8px rgba(43, 38, 34, 0.05);
+}
+
+.listContent {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding-bottom: 40px;
+  align-content: start;
+}
+
+.hearingCard {
+  background: #FFFFFF;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(43, 38, 34, 0.02);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.hearingCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.hearingCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(43, 38, 34, 0.06);
+  border-color: var(--accent-light, #C9640A);
+}
+.hearingCard:hover::before {
+  background: var(--accent, #E4720C);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.childInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.childName {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text, #2B2622);
+}
+
+.childCode {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6B6259);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid transparent;
+}
+
+.statusBadge.scheduled {
+  background: rgba(228, 114, 12, 0.08);
+  color: var(--accent-light, #C9640A);
+  border-color: rgba(228, 114, 12, 0.15);
+}
+
+.statusBadge.in_progress {
+  background: rgba(200, 137, 26, 0.08);
+  color: #B37A17;
+  border-color: rgba(200, 137, 26, 0.15);
+}
+
+.statusBadge.completed {
+  background: rgba(75, 122, 91, 0.08);
+  color: var(--green, #4B7A5B);
+  border-color: rgba(75, 122, 91, 0.15);
+}
+
+.dateTime {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary, #6B6259);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(251, 248, 242, 0.8);
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.dateTime span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notes {
+  font-size: 0.9rem;
+  color: var(--text, #2B2622);
+  line-height: 1.5;
+  padding-right: 12px;
+}
+
+.openConsoleBtn {
+  margin-top: 4px;
+  padding: 12px;
+  background: #FFFFFF;
+  color: var(--text, #2B2622);
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.openConsoleBtn:hover {
+  background: var(--bg, #FBF8F2);
+  border-color: var(--accent, #E4720C);
+  color: var(--accent, #E4720C);
+}
+
+/* ===== View B: Hearing Console ===== */
+.consoleContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid var(--border, #EEE6D8);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  overflow: hidden;
+}
+
+.consoleHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border, #EEE6D8);
+  z-index: 10;
+}
+
+.backBtn {
+  background: var(--bg, #FBF8F2);
+  border: 1px solid var(--border, #EEE6D8);
+  color: var(--text, #2B2622);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  background: #FFFFFF;
+  border-color: var(--accent, #E4720C);
+  color: var(--accent, #E4720C);
+}
+
+.consoleTitle {
+  flex: 1;
+}
+
+.consoleTitle h3 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text, #2B2622);
+  margin-bottom: 2px;
+}
+
+.consoleSubtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6B6259);
+  font-weight: 600;
+}
+
+/* Chat Thread */
+.chatThread {
+  flex: 1;
+  padding: 20px;
+  background: var(--bg, #FBF8F2);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chatMessage {
+  display: flex;
+  gap: 12px;
+  max-width: 85%;
+}
+
+.chatMessage.isCurrentUser {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.messageAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: var(--text-secondary, #6B6259);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  flex-shrink: 0;
+  border: 1px solid var(--border, #EEE6D8);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.chatMessage.isCurrentUser .messageAvatar {
+  background: var(--accent-bg, rgba(228, 114, 12, 0.1));
+  color: var(--accent, #E4720C);
+  border-color: rgba(228, 114, 12, 0.2);
+}
+
+.messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chatMessage.isCurrentUser .messageContent {
+  align-items: flex-end;
+}
+
+.messageMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chatMessage.isCurrentUser .messageMeta {
+  flex-direction: row-reverse;
+}
+
+.messageAuthor {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text, #2B2622);
+}
+
+.messageTime {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6B6259);
+}
+
+.messageBubble {
+  background: #FFFFFF;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 12px;
+  border-top-left-radius: 2px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(43, 38, 34, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chatMessage.isCurrentUser .messageBubble {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 2px;
+  background: rgba(228, 114, 12, 0.03);
+  border-color: rgba(228, 114, 12, 0.2);
+}
+
+.audioPlayer {
+  width: 100%;
+  height: 36px;
+  outline: none;
+}
+
+.transcriptContainer {
+  background: var(--bg, #FBF8F2);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+  border: 1px solid var(--border, #EEE6D8);
+}
+
+.chatMessage.isCurrentUser .transcriptContainer {
+  background: #FFFFFF;
+}
+
+.transcriptLanguage {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  background: var(--accent, #E4720C);
+  color: #FFFFFF;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chatMessage.isCurrentUser .transcriptLanguage {
+  left: auto;
+  right: 12px;
+}
+
+.transcriptText {
+  font-size: 0.9rem;
+  color: var(--text, #2B2622);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Recording Bar (Sticky Bottom) */
+.recordingBar {
+  padding: 16px 20px 20px;
+  background: #FFFFFF;
+  border-top: 1px solid var(--border, #EEE6D8);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.languageSelector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+}
+
+.langChip {
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: var(--bg, #FBF8F2);
+  color: var(--text-secondary, #6B6259);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border, #EEE6D8);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.langChip:hover {
+  background: #FFFFFF;
+  color: var(--text, #2B2622);
+  border-color: var(--accent-light, #C9640A);
+}
+
+.langChip.active {
+  background: rgba(228, 114, 12, 0.1);
+  color: var(--accent, #E4720C);
+  border-color: rgba(228, 114, 12, 0.3);
+}
+
+.transcriptOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.transcriptOptionCard {
+  padding: 10px;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 8px;
+  background: #FFFFFF;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text, #2B2622);
+  transition: all 0.2s;
+}
+
+.transcriptOptionCard:hover {
+  border-color: var(--accent, #E4720C);
+  background: var(--accent-bg, rgba(228, 114, 12, 0.05));
+}
+
+/* Custom Dropdown */
+.dropdownContainer {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border, #EEE6D8);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(43, 38, 34, 0.12);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  min-width: 140px;
+  z-index: 100;
+}
+
+.dropdownItem {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6B6259);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dropdownItem:hover {
+  background: var(--bg, #FBF8F2);
+  color: var(--text, #2B2622);
+}
+
+.dropdownItem.active {
+  background: rgba(228, 114, 12, 0.1);
+  color: var(--accent, #E4720C);
+}
+
+.dropdownMenu::-webkit-scrollbar {
+  width: 6px;
+}
+.dropdownMenu::-webkit-scrollbar-thumb {
+  background: var(--border, #EEE6D8);
+  border-radius: 6px;
+}
+
+/* ===== Responsive Mobile Tweaks ===== */
+@media (max-width: 768px) {
+  .consoleContainer {
+    border-radius: 12px;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .listContent {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .hearingCard {
+    padding: 16px;
+  }
+  
+  .consoleHeader {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  
+  .chatThread {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .chatMessage {
+    max-width: 95%;
+  }
+  
+  .messageBubble {
+    padding: 12px;
+  }
+  
+  .recordingBar {
+    padding: 12px 16px 16px;
+  }
+  
+  .filterTabs {
+    margin-bottom: 16px;
+  }
+}
