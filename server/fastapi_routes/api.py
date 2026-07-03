@@ -18,6 +18,11 @@ import socket
 
 router = APIRouter()
 
+
+def _parse_due_date(value: str) -> datetime:
+    """Deadline due_date is stored as YYYY-MM-DD, but tolerate a full ISO datetime too."""
+    return datetime.strptime(value[:10], "%Y-%m-%d")
+
 @router.get("/api/system/network-info")
 def get_network_info():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -876,10 +881,16 @@ def log_family_visit(child_id: str, data: FamilyVisitRequest, request: Request, 
 #  CCI Inspections
 # ════════════════════════════════════════════════════════════════════════
 
-@router.get("/api/ccis/{cci_id}/inspections", response_model=List[CCIVisitResponse])
+@router.get("/api/ccis/{cci_id}/inspections")
 def list_inspections(cci_id: str, user: dict = Depends(require_roles(DATA_READ_ROLES))):
     conn = get_db()
-    rows = conn.execute("SELECT * FROM cci_visits WHERE cci_id = ? ORDER BY visit_date DESC", (cci_id,)).fetchall()
+    rows = conn.execute("""
+        SELECT v.*, u.full_name as officer_name, u.district as officer_district
+        FROM cci_visits v 
+        LEFT JOIN users u ON v.officer_id = u.id 
+        WHERE v.cci_id = ? 
+        ORDER BY v.visit_date DESC
+    """, (cci_id,)).fetchall()
     return _rows_to_list(rows)
 
 
@@ -1001,7 +1012,7 @@ def dashboard_deadlines(user: dict = Depends(require_roles(DATA_READ_ROLES))):
     for r in rows:
         d = _row_to_dict(r)
         try:
-            due = datetime.strptime(d["due_date"], "%Y-%m-%d")
+            due = _parse_due_date(d["due_date"])
         except (ValueError, TypeError):
             due = now
 
@@ -1049,10 +1060,15 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
                         time_metric = "Turns 18 Today"
                 except Exception:
                     pass
+            
+            # Severity logic for AGE_OUT: red if < 30 days, else medium
+            sev = "high" if days and days < 30 else "medium"
+            
             alerts.append({
-                "type": "AGE_OUT", "severity": "high", "child_id": c["id"],
+                "type": "AGE_OUT", "severity": sev, "child_id": c["id"],
                 "child_code": c["child_code"], "message": f"{c['name']} (age {age}) is approaching age-out",
                 "time_metric": time_metric,
+                "days_diff": abs(days) if days is not None else 999,
                 "title": f"Age Out Alert For {c['name']}",
                 "subtitle": f"Due on {turn_18.strftime('%m/%d/%Y')}" if time_metric and c["date_of_birth"] else f"Estimated Age: {age}"
             })
@@ -1062,6 +1078,7 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
         alerts.append({
             "type": "LFA_ELIGIBLE", "severity": "medium", "child_id": c["id"],
             "child_code": c["child_code"], "message": f"{c['name']} is eligible for Legal Free for Adoption",
+            "days_diff": 0,
             "title": f"LFA Eligible For {c['name']}",
             "subtitle": "Child is eligible for Legal Free for Adoption"
         })
@@ -1091,6 +1108,7 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
             "type": "NO_FAMILY_CONTACT", "severity": "medium", "child_id": c["id"],
             "child_code": c["child_code"], "message": f"{c['name']} has had no family contact for 6+ months",
             "time_metric": time_metric,
+            "days_diff": abs(days) if c["last_contact"] and 'days' in locals() else 999,
             "title": f"No Family Contact For {c['name']}",
             "subtitle": f"Last Contact: {c['last_contact']}" if c["last_contact"] else "Never visited"
         })
@@ -1104,7 +1122,7 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
         overdue_args,
     ).fetchall()
     for d in overdue:
-        due_date = datetime.strptime(d["due_date"], "%Y-%m-%d")
+        due_date = _parse_due_date(d["due_date"])
         days = (due_date - now).days
         time_metric = f"{abs(days)} Days Overdue" if days < 0 else "Due Today"
         alerts.append({
@@ -1112,6 +1130,7 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
             "child_code": d["child_code"] or "",
             "message": f"Overdue: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
             "time_metric": time_metric,
+            "days_diff": abs(days),
             "title": f"{d['notes']} For {d['child_name'] or 'Child'}",
             "subtitle": f"Due on {due_date.strftime('%m/%d/%Y')}"
         })
@@ -1125,7 +1144,7 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
         upcoming_args,
     ).fetchall()
     for d in upcoming:
-        due_date = datetime.strptime(d["due_date"], "%Y-%m-%d")
+        due_date = _parse_due_date(d["due_date"])
         days = (due_date - now).days
         time_metric = f"{days} Days Left" if days > 0 else "Due Today"
         alerts.append({
@@ -1133,6 +1152,7 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
             "child_code": d["child_code"] or "",
             "message": f"Due Soon: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
             "time_metric": time_metric,
+            "days_diff": abs(days),
             "title": f"{d['notes']} For {d['child_name'] or 'Child'}",
             "subtitle": f"Due on {due_date.strftime('%m/%d/%Y')}"
         })

@@ -120,7 +120,6 @@ def get_hearing_recordings(hearing_id: str):
     
     results = []
     for r in rows:
-        filename = r["audio_path"].split('/')[-1] if '/' in r["audio_path"] else r["audio_path"].split('\\')[-1]
         results.append({
             "id": r["job_id"],
             "user": {
