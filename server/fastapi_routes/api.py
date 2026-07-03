@@ -3,7 +3,8 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional
-from fastapi import APIRouter, Request, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, Request, HTTPException, Depends, UploadFile, File, BackgroundTasks
+from werkzeug.security import generate_password_hash
 
 from server.db import get_db, _iso_now
 from server.utils import _row_to_dict, _rows_to_list, compute_age
@@ -13,7 +14,63 @@ from server.fastapi_routes.dependencies import (
 )
 from server.fastapi_routes.api_schemas import *
 
+import socket
+
 router = APIRouter()
+
+@router.get("/api/system/network-info")
+def get_network_info():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return {"lan_ip": IP}
+# ════════════════════════════════════════════════════════════════════════
+#  Users (System Admin only)
+# ════════════════════════════════════════════════════════════════════════
+
+@router.get("/api/users", response_model=List[User])
+def list_users(
+    request: Request,
+    user=Depends(require_roles(DATA_READ_ROLES))
+):
+    db = get_db()
+    rows = db.execute("SELECT id, username, full_name, role, district, location, cci_id, email, phone, is_active, created_at FROM users").fetchall()
+    return _rows_to_list(rows)
+
+@router.post("/api/users", response_model=User)
+def create_user(
+    req: UserCreate,
+    request: Request,
+    user=Depends(require_roles(["system_admin"]))
+):
+    db = get_db()
+    
+    # Check if username exists
+    existing = db.execute("SELECT id FROM users WHERE username = ?", (req.username,)).fetchone()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+        
+    user_id = str(uuid.uuid4())
+    password_hash = generate_password_hash(req.password)
+    
+    db.execute("""
+        INSERT INTO users (id, username, password_hash, full_name, role, district, location, cci_id, email, phone, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        user_id, req.username, password_hash, req.full_name, req.role,
+        req.district, req.location, req.cci_id, req.email, req.phone, 1 if req.is_active else 0
+    ))
+    db.commit()
+    
+    audit(db, user["id"], "CREATE_USER", "users", user_id, f"Created user {req.username}", request.client.host)
+    
+    new_user = db.execute("SELECT id, username, full_name, role, district, location, cci_id, email, phone, is_active, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+    return _row_to_dict(new_user)
 
 # ════════════════════════════════════════════════════════════════════════
 #  Children
@@ -26,11 +83,14 @@ def list_children(
     district: Optional[str] = None,
     legal_status: Optional[str] = None,
     admission_category: Optional[str] = None,
-    is_lfa_eligible: Optional[int] = None
+    is_lfa_eligible: Optional[int] = None,
+    user: dict = Depends(require_roles(DATA_READ_ROLES))
 ):
     conn = get_db()
-    query = "SELECT * FROM children WHERE 1=1"
-    params = []
+    auth_sql, auth_params = get_dashboard_filter(user)
+    
+    query = f"SELECT * FROM children WHERE {auth_sql}"
+    params = list(auth_params)
 
     filters = {
         "cci_id": cci_id,
@@ -67,7 +127,7 @@ def search_children(q: str = "", user: dict = Depends(require_roles(DATA_READ_RO
 def get_child(child_id: str, user: dict = Depends(require_roles(DATA_READ_ROLES))):
     conn = get_db()
     child = conn.execute(
-        """SELECT children.*, ccis.name as cci_name 
+        """SELECT children.*, ccis.name as cci_name, ccis.district as cci_district 
            FROM children 
            LEFT JOIN ccis ON children.cci_id = ccis.id 
            WHERE children.id = ?""", 
@@ -98,8 +158,13 @@ def register_child(data: ChildRegisterRequest, request: Request, user: dict = De
     now = _iso_now()
 
     year = datetime.now().year
-    count = conn.execute("SELECT COUNT(*) as cnt FROM children").fetchone()["cnt"]
-    child_code = f"CWC-HYD-{year}-{count + 1:04d}"
+    # Dynamically generate prefix based on assigned CCI's district
+    cci = conn.execute("SELECT district FROM ccis WHERE id = ?", (data.cci_id,)).fetchone()
+    cci_district = cci["district"] if (cci and cci["district"]) else "Unknown"
+    district_prefix = cci_district[:3].upper() if cci_district != "Unknown" else "UNK"
+    
+    count = conn.execute("SELECT COUNT(*) as cnt FROM children WHERE child_code LIKE ?", (f"CWC-{district_prefix}-{year}-%",)).fetchone()["cnt"]
+    child_code = f"CWC-{district_prefix}-{year}-{count + 1:04d}"
 
     child_id = str(uuid.uuid4())
     
@@ -112,7 +177,7 @@ def register_child(data: ChildRegisterRequest, request: Request, user: dict = De
         (
             child_id, child_code, data.name, data.date_of_birth, data.age,
             data.gender, data.admission_date or now[:10], data.admission_category,
-            data.physical_description, data.cci_id, data.district,
+            data.physical_description, data.cci_id, cci_district,
             "Under Inquiry", data.is_lfa_eligible, data.lfa_flag_reason, now, now,
         ),
     )
@@ -124,7 +189,7 @@ def register_child(data: ChildRegisterRequest, request: Request, user: dict = De
         (
             str(uuid.uuid4()), child_id, "ADMISSION", now,
             f"Child registered with code {child_code}",
-            user.get("full_name", "Unknown"),
+            user.get("id"),
         ),
     )
 
@@ -162,6 +227,7 @@ def update_child_status(child_id: str, data: ChildStatusUpdateRequest, request: 
         raise HTTPException(status_code=400, detail="legal_status is required")
 
     conn = get_db()
+    print("USER DICT IN UPDATE_CHILD_STATUS:", user)
     child = conn.execute("SELECT * FROM children WHERE id = ?", (child_id,)).fetchone()
     if child is None:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -186,13 +252,17 @@ def update_child_status(child_id: str, data: ChildStatusUpdateRequest, request: 
         """INSERT INTO case_history
            (id, child_id, event_type, event_date, description, performed_by)
            VALUES (?,?,?,?,?,?)""",
-        (str(uuid.uuid4()), child_id, "STATUS_CHANGE", now, f"{old_status} -> {new_status}. {data.notes}", user.get("full_name", "Unknown")),
+        (str(uuid.uuid4()), child_id, "STATUS_CHANGE", now, f"{old_status} -> {new_status}. {data.notes}", user.get("id")),
     )
     conn.commit()
     audit(request, "UPDATE_CHILD_STATUS", f"Child {child['child_code']}: {old_status} → {new_status}", "child", child_id)
 
     updated = conn.execute("SELECT * FROM children WHERE id = ?", (child_id,)).fetchone()
     return _row_to_dict(updated)
+
+@router.get("/api/test-user")
+def test_user(user: dict = Depends(require_roles(DATA_ENTRY_ROLES))):
+    return user
 
 
 @router.put("/api/children/{child_id}", response_model=ChildResponse)
@@ -232,6 +302,8 @@ def update_child(child_id: str, data: ChildUpdateRequest, request: Request, user
     audit(request, "UPDATE_CHILD", f"Child {child_id} updated", "child", child_id)
     updated = conn.execute("SELECT * FROM children WHERE id = ?", (child_id,)).fetchone()
     return _row_to_dict(updated)
+
+
 
 # ════════════════════════════════════════════════════════════════════════
 #  Case History
@@ -289,6 +361,12 @@ def get_hearing(hearing_id: str, user: dict = Depends(require_roles(DATA_READ_RO
 @router.post("/api/hearings", response_model=HearingResponse, status_code=201)
 def create_hearing(data: HearingCreateRequest, request: Request, user: dict = Depends(require_roles(DATA_ENTRY_ROLES))):
     conn = get_db()
+    
+    # Check duplicate active hearings
+    existing = conn.execute("SELECT * FROM hearings WHERE child_id = ? AND status = 'scheduled'", (data.child_id,)).fetchone()
+    if existing:
+        raise HTTPException(status_code=400, detail="An active scheduled hearing already exists for this child.")
+        
     hearing_id = str(uuid.uuid4())
     now = _iso_now()
 
@@ -347,6 +425,93 @@ def update_hearing(hearing_id: str, data: HearingUpdateRequest, request: Request
         updates.append("scheduled_time = ?")
         params.append(data.hearing_time)
 
+    # Workflow B: Hydration & Finalization
+    if data.transcript_finalized and not row["transcript_finalized"]:
+        now_str = _iso_now()
+        updates.append("transcript_finalized_at = ?")
+        params.append(now_str)
+        updates.append("transcript_finalized_by = ?")
+        params.append(user.get("id"))
+        
+        try:
+            from weasyprint import HTML
+            import os
+            
+            # Fetch child for template
+            child = conn.execute("SELECT * FROM children WHERE id = ?", (row["child_id"],)).fetchone()
+            
+            # Simple keyword extraction to determine new status
+            new_status = child["legal_status"]
+            transcript_text = (data.transcript_edited or data.transcript_raw or row["transcript_edited"] or row["transcript_raw"] or "").lower()
+            
+            if "lfa" in transcript_text or "legally free" in transcript_text:
+                new_status = "Legally Free for Adoption"
+            elif "foster" in transcript_text:
+                new_status = "Placed in Foster Care"
+            elif "restore" in transcript_text:
+                new_status = "Restored to Family"
+            
+            if new_status != child["legal_status"]:
+                conn.execute("UPDATE children SET legal_status = ?, updated_at = ? WHERE id = ?", (new_status, now_str, row["child_id"]))
+                conn.execute(
+                    "INSERT INTO case_history (id, child_id, event_type, event_date, description, performed_by) VALUES (?,?,?,?,?,?)",
+                    (str(uuid.uuid4()), row["child_id"], "STATUS_CHANGE", now_str, f"Status updated to {new_status} from transcript findings", user.get("id")),
+                )
+                
+            # HTML Template for PDF
+            html_content = f"""
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Helvetica, Arial, sans-serif; padding: 40px; }}
+                    h1 {{ text-align: center; color: #2c3e50; }}
+                    .meta {{ margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }}
+                    .meta p {{ margin: 5px 0; }}
+                    .transcript {{ margin-top: 20px; white-space: pre-wrap; }}
+                    .footer {{ margin-top: 50px; font-size: 0.8em; color: #7f8c8d; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <h1>CWC Hearing Order</h1>
+                <div class="meta">
+                    <p><strong>Child Name:</strong> {child['name']}</p>
+                    <p><strong>Child Code:</strong> {child['child_code']}</p>
+                    <p><strong>Hearing Date:</strong> {data.hearing_date or row['hearing_date']}</p>
+                    <p><strong>Attendees:</strong> {data.attendees or row['attendees']}</p>
+                    <p><strong>New Status:</strong> {new_status}</p>
+                </div>
+                <div class="transcript">
+                    <h3>Final Transcript & Findings</h3>
+                    <p>{data.transcript_edited or data.transcript_raw or row["transcript_edited"] or row["transcript_raw"]}</p>
+                </div>
+                <div class="footer">
+                    Generated by AI4Bharat BalKawach Platform at {now_str}
+                </div>
+            </body>
+            </html>
+            """
+            
+            orders_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "uploads", "orders")
+            os.makedirs(orders_dir, exist_ok=True)
+            
+            order_id = str(uuid.uuid4())
+            pdf_filename = f"order_{order_id}.pdf"
+            pdf_path = os.path.join(orders_dir, pdf_filename)
+            
+            HTML(string=html_content).write_pdf(pdf_path)
+            
+            year = datetime.now().year
+            count = conn.execute("SELECT COUNT(*) as cnt FROM orders").fetchone()["cnt"]
+            order_number = f"ORD-HYD-{year}-{count + 1:04d}"
+            
+            conn.execute(
+                "INSERT INTO orders (id, order_number, child_id, hearing_id, order_type, district, status, order_body, findings, created_by, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (order_id, order_number, row["child_id"], hearing_id, "other", data.district or row["district"], "approved", f"/api/audio/orders/{pdf_filename}", "Generated from finalized transcript.", user.get("full_name", "Unknown"), now_str)
+            )
+            
+        except Exception as e:
+            print(f"Failed to generate PDF order: {e}")
+
     if updates:
         updates.append("updated_at = ?")
         params.append(_iso_now())
@@ -355,7 +520,10 @@ def update_hearing(hearing_id: str, data: HearingUpdateRequest, request: Request
         conn.commit()
 
     audit(request, "UPDATE_HEARING", f"Hearing {hearing_id} updated", "hearing", hearing_id)
-    updated = conn.execute("SELECT * FROM hearings WHERE id = ?", (hearing_id,)).fetchone()
+    updated = conn.execute(
+        "SELECT h.*, c.name as child_name, c.child_code as child_code FROM hearings h LEFT JOIN children c ON h.child_id = c.id WHERE h.id = ?", 
+        (hearing_id,)
+    ).fetchone()
     return _row_to_dict(updated)
 
 
@@ -400,17 +568,28 @@ def list_orders(
     user: dict = Depends(require_roles(DATA_READ_ROLES))
 ):
     conn = get_db()
-    query = "SELECT * FROM orders WHERE 1=1"
+    query = """
+        SELECT o.*, c.name as child_name, c.child_code 
+        FROM orders o
+        LEFT JOIN children c ON o.child_id = c.id
+        WHERE 1=1
+    """
     params = []
 
-    filters = {"district": district, "status": status, "child_id": child_id}
+    filters = {"o.district": district, "o.status": status, "o.child_id": child_id}
     for col, val in filters.items():
         if val is not None:
             query += f" AND {col} = ?"
             params.append(val)
 
-    rows = conn.execute(query + " ORDER BY created_at DESC", params).fetchall()
-    return _rows_to_list(rows)
+    rows = conn.execute(query + " ORDER BY o.created_at DESC", params).fetchall()
+    
+    result = []
+    for r in rows:
+        rd = dict(r)
+        rd["child"] = {"name": r["child_name"], "id": r["child_id"], "child_code": r["child_code"]}
+        result.append(rd)
+    return result
 
 
 @router.get("/api/orders/{order_id}", response_model=OrderResponse)
@@ -427,12 +606,21 @@ def create_order(data: OrderCreateRequest, request: Request, user: dict = Depend
     conn = get_db()
     now = _iso_now()
 
+    child_id = data.child_id
+    
+    district_name = data.district
+    if child_id:
+        child_row = conn.execute("SELECT district FROM children WHERE id = ?", (child_id,)).fetchone()
+        if child_row and child_row["district"]:
+            district_name = child_row["district"]
+            
+    dist_code = district_name[:3].upper() if district_name else "UNK"
+
     year = datetime.now().year
-    count = conn.execute("SELECT COUNT(*) as cnt FROM orders").fetchone()["cnt"]
-    order_number = f"ORD-HYD-{year}-{count + 1:04d}"
+    count = conn.execute("SELECT COUNT(*) as cnt FROM orders WHERE order_number LIKE ?", (f"ORD-{dist_code}-{year}-%",)).fetchone()["cnt"]
+    order_number = f"ORD-{dist_code}-{year}-{count + 1:04d}"
     order_id = str(uuid.uuid4())
 
-    child_id = data.child_id
     transcript = data.transcript
 
     if child_id and not transcript:
@@ -445,6 +633,8 @@ def create_order(data: OrderCreateRequest, request: Request, user: dict = Depend
         if latest_hearing:
             transcript = latest_hearing["transcript_raw"]
 
+    hearing_id_val = data.hearing_id if data.hearing_id else None
+
     conn.execute(
         """INSERT INTO orders
            (id, order_number, child_id, hearing_id, order_type,
@@ -452,8 +642,8 @@ def create_order(data: OrderCreateRequest, request: Request, user: dict = Depend
             created_at)
            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
         (
-            order_id, order_number, child_id, data.hearing_id, data.order_type,
-            data.district, "draft", data.order_body, data.findings,
+            order_id, order_number, child_id, hearing_id_val, data.order_type,
+            district_name, "draft", data.order_body, data.findings,
             user.get("full_name", "Unknown"), now,
         ),
     )
@@ -498,6 +688,14 @@ def print_order(order_id: str, user: dict = Depends(require_roles(DATA_READ_ROLE
         if child:
             order_dict["child"] = _row_to_dict(child)
 
+    if not order_dict.get("approved_by"):
+        chairperson = conn.execute(
+            "SELECT full_name FROM users WHERE role = 'cwc_chairperson' AND district = ?",
+            (order_dict.get("district"),)
+        ).fetchone()
+        if chairperson:
+            order_dict["approved_by"] = chairperson["full_name"]
+
     order_dict["print_format"] = True
     order_dict["generated_at"] = _iso_now()
     return order_dict
@@ -507,8 +705,8 @@ def print_order(order_id: str, user: dict = Depends(require_roles(DATA_READ_ROLE
 def update_order(order_id: str, data: OrderUpdateRequest, request: Request, user: dict = Depends(require_roles(CHAIR_ROLES))):
     conn = get_db()
     conn.execute(
-        "UPDATE orders SET order_body = ?, findings = ?, updated_at = ? WHERE id = ?",
-        (data.order_body, data.findings, _iso_now(), order_id)
+        "UPDATE orders SET order_body = ?, findings = ?, updated_at = ?, updated_by = ? WHERE id = ?",
+        (data.order_body, data.findings, _iso_now(), user.get("full_name", "Unknown"), order_id)
     )
     conn.commit()
     audit(request, "UPDATE_ORDER", f"Updated order {order_id}", "order", order_id)
@@ -534,8 +732,37 @@ def reject_order(order_id: str, request: Request, user: dict = Depends(require_r
 @router.get("/api/ccis", response_model=List[CCIResponse])
 def list_ccis(user: dict = Depends(require_roles(DATA_READ_ROLES))):
     conn = get_db()
+    conn.execute('''
+        UPDATE ccis 
+        SET current_occupancy = (
+            SELECT COUNT(*) FROM children WHERE children.cci_id = ccis.id
+        )
+    ''')
+    conn.commit()
     rows = conn.execute("SELECT * FROM ccis ORDER BY name").fetchall()
     return _rows_to_list(rows)
+
+@router.get("/api/ccis/{cci_id}/details")
+def get_cci_details(cci_id: str, user: dict = Depends(require_roles(DATA_READ_ROLES))):
+    conn = get_db()
+    cci = conn.execute("SELECT * FROM ccis WHERE id = ?", (cci_id,)).fetchone()
+    if not cci:
+        raise HTTPException(status_code=404, detail="CCI not found")
+        
+    children_rows = conn.execute("SELECT id, name, gender, date_of_birth, estimated_age, legal_status FROM children WHERE cci_id = ?", (cci_id,)).fetchall()
+    staff = conn.execute("SELECT id, full_name as name, role, email, phone FROM users WHERE cci_id = ?", (cci_id,)).fetchall()
+    
+    children = []
+    for r in children_rows:
+        rd = _row_to_dict(r)
+        rd["age"] = compute_age(rd.get("date_of_birth"), rd.get("estimated_age"))
+        children.append(rd)
+
+    return {
+        "cci": dict(cci),
+        "children": children,
+        "staff": _rows_to_list(staff)
+    }
 
 
 @router.get("/api/ccis/{cci_id}", response_model=CCIResponse)
@@ -563,9 +790,9 @@ def create_cci(data: CCICreateRequest, request: Request, user: dict = Depends(re
     cci_id = str(uuid.uuid4())
     
     conn.execute(
-        """INSERT INTO ccis (id, name, district, type, capacity, contact_person, contact_phone, staffing_details)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (cci_id, data.name, data.district, data.type, data.capacity, data.contact_person, data.contact_phone, data.staffing_details)
+        """INSERT INTO ccis (id, name, district, capacity, contact_person, contact_phone, staffing_details)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (cci_id, data.name, data.district, data.capacity, data.contact_person, data.contact_phone, data.staffing_details)
     )
     conn.commit()
     audit(request, "CREATE_CCI", f"CCI {data.name} registered", "cci", cci_id)
@@ -580,7 +807,7 @@ def update_cci(cci_id: str, data: CCIUpdateRequest, request: Request, user: dict
     updates = []
     params = []
     fields = {
-        "name": data.name, "district": data.district, "type": data.type,
+        "name": data.name, "district": data.district,
         "capacity": data.capacity, "contact_person": data.contact_person,
         "contact_phone": data.contact_phone, "staffing_details": data.staffing_details
     }
@@ -680,41 +907,65 @@ def log_inspection(cci_id: str, data: CCIVisitRequest, request: Request, user: d
 #  Dashboard & Alerts
 # ════════════════════════════════════════════════════════════════════════
 
+def get_dashboard_filter(user: dict, child_table_alias: str = ""):
+    prefix = f"{child_table_alias}." if child_table_alias else ""
+    if user["role"] in ["system_admin", "wcd_official"]:
+        return "1=1", []
+    
+    if user["role"] in ["cwc_member", "cwc_chairperson", "dcpu_officer"] and user.get("district"):
+        return f"{prefix}district = ?", [user["district"]]
+    elif user.get("cci_id"):
+        return f"{prefix}cci_id = ?", [user["cci_id"]]
+        
+    return "1=0", []
+
 @router.get("/api/dashboard/stats", response_model=DashboardStatsResponse)
 def dashboard_stats(user: dict = Depends(require_roles(DATA_READ_ROLES))):
     conn = get_db()
     now = datetime.now()
     six_months_ago = (now - timedelta(days=180)).strftime("%Y-%m-%d")
 
-    total_children = conn.execute("SELECT COUNT(*) as cnt FROM children").fetchone()["cnt"]
+    where_clause, params = get_dashboard_filter(user, "")
+    where_clause_c, params_c = get_dashboard_filter(user, "c")
 
-    status_rows = conn.execute("SELECT legal_status, COUNT(*) as cnt FROM children GROUP BY legal_status").fetchall()
+    total_children = conn.execute(f"SELECT COUNT(*) as cnt FROM children WHERE {where_clause}", params).fetchone()["cnt"]
+
+    status_rows = conn.execute(f"SELECT legal_status, COUNT(*) as cnt FROM children WHERE {where_clause} GROUP BY legal_status", params).fetchall()
     by_status = {r["legal_status"]: r["cnt"] for r in status_rows}
 
-    cat_rows = conn.execute("SELECT admission_category, COUNT(*) as cnt FROM children GROUP BY admission_category").fetchall()
+    cat_rows = conn.execute(f"SELECT admission_category, COUNT(*) as cnt FROM children WHERE {where_clause} GROUP BY admission_category", params).fetchall()
     by_category = {r["admission_category"]: r["cnt"] for r in cat_rows}
 
-    total_ccis = conn.execute("SELECT COUNT(*) as cnt FROM ccis").fetchone()["cnt"]
-    total_hearings = conn.execute("SELECT COUNT(*) as cnt FROM hearings").fetchone()["cnt"]
-    total_orders = conn.execute("SELECT COUNT(*) as cnt FROM orders").fetchone()["cnt"]
+    if user["role"] == "system_admin":
+        total_ccis = conn.execute("SELECT COUNT(*) as cnt FROM ccis").fetchone()["cnt"]
+    elif user["role"] in ["cwc_member", "cwc_chairperson", "dcpu_officer"] and user.get("district"):
+        total_ccis = conn.execute("SELECT COUNT(*) as cnt FROM ccis WHERE district = ?", (user["district"],)).fetchone()["cnt"]
+    elif user.get("cci_id"):
+        total_ccis = conn.execute("SELECT COUNT(*) as cnt FROM ccis WHERE id = ?", (user["cci_id"],)).fetchone()["cnt"]
+    else:
+        total_ccis = 0
+
+    total_hearings = conn.execute(f"SELECT COUNT(*) as cnt FROM hearings h JOIN children c ON h.child_id = c.id WHERE {where_clause_c}", params_c).fetchone()["cnt"]
+    total_orders = conn.execute(f"SELECT COUNT(*) as cnt FROM orders o JOIN children c ON o.child_id = c.id WHERE {where_clause_c}", params_c).fetchone()["cnt"]
 
     today = now.strftime("%Y-%m-%d")
     seven_days = (now + timedelta(days=7)).strftime("%Y-%m-%d")
 
-    overdue = conn.execute("SELECT COUNT(*) as cnt FROM deadlines WHERE status = 'pending' AND due_date < ?", (today,)).fetchone()["cnt"]
-    approaching = conn.execute("SELECT COUNT(*) as cnt FROM deadlines WHERE status = 'pending' AND due_date >= ? AND due_date <= ?", (today, seven_days)).fetchone()["cnt"]
-    ageout = conn.execute("SELECT COUNT(*) as cnt FROM children WHERE estimated_age >= 17").fetchone()["cnt"]
+    overdue = conn.execute(f"SELECT COUNT(*) as cnt FROM deadlines d JOIN children c ON d.child_id = c.id WHERE d.status = 'pending' AND d.due_date < ? AND {where_clause_c}", (today, *params_c)).fetchone()["cnt"]
+    approaching = conn.execute(f"SELECT COUNT(*) as cnt FROM deadlines d JOIN children c ON d.child_id = c.id WHERE d.status = 'pending' AND d.due_date >= ? AND d.due_date <= ? AND {where_clause_c}", (today, seven_days, *params_c)).fetchone()["cnt"]
+    ageout = conn.execute(f"SELECT COUNT(*) as cnt FROM children WHERE estimated_age >= 17 AND {where_clause}", params).fetchone()["cnt"]
 
+    no_contact_args = [six_months_ago] + params_c
     no_contact = conn.execute(
-        """SELECT COUNT(*) as cnt FROM children c
+        f"""SELECT COUNT(*) as cnt FROM children c
            WHERE NOT EXISTS (
                SELECT 1 FROM family_visits fv
                WHERE fv.child_id = c.id AND fv.visit_date >= ?
-           )""",
-        (six_months_ago,),
+           ) AND {where_clause_c}""",
+        no_contact_args,
     ).fetchone()["cnt"]
 
-    lfa = conn.execute("SELECT COUNT(*) as cnt FROM children WHERE is_lfa_eligible = 1").fetchone()["cnt"]
+    lfa = conn.execute(f"SELECT COUNT(*) as cnt FROM children WHERE is_lfa_eligible = 1 AND {where_clause}", params).fetchone()["cnt"]
 
     return {
         "total_children": total_children,
@@ -733,7 +984,15 @@ def dashboard_stats(user: dict = Depends(require_roles(DATA_READ_ROLES))):
 @router.get("/api/dashboard/deadlines", response_model=List[DeadlineResponse])
 def dashboard_deadlines(user: dict = Depends(require_roles(DATA_READ_ROLES))):
     conn = get_db()
-    rows = conn.execute("SELECT * FROM deadlines ORDER BY due_date ASC").fetchall()
+    where_clause_c, params_c = get_dashboard_filter(user, "c")
+    query = f"""
+        SELECT d.*, c.name as child_name, c.child_code 
+        FROM deadlines d 
+        JOIN children c ON d.child_id = c.id
+        WHERE {where_clause_c}
+        ORDER BY d.due_date ASC
+    """
+    rows = conn.execute(query, params_c).fetchall()
 
     now = datetime.now()
     seven_days = now + timedelta(days=7)
@@ -768,48 +1027,114 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
     six_months_ago = (now - timedelta(days=180)).strftime("%Y-%m-%d")
     alerts = []
 
-    ageout_children = conn.execute("SELECT id, child_code, name, date_of_birth, estimated_age FROM children").fetchall()
+    where_clause, params = get_dashboard_filter(user, "")
+    where_clause_c, params_c = get_dashboard_filter(user, "c")
+
+    ageout_children = conn.execute(f"SELECT id, child_code, name, date_of_birth, estimated_age FROM children WHERE {where_clause}", params).fetchall()
     for c in ageout_children:
         age = compute_age(c["date_of_birth"], c["estimated_age"])
         if age and age >= 17:
+            time_metric = None
+            if c["date_of_birth"]:
+                try:
+                    dob = datetime.strptime(c["date_of_birth"], "%Y-%m-%d")
+                    # Handle leap year birthday when adding 18 years
+                    turn_18 = dob.replace(year=dob.year + 18) if not (dob.month == 2 and dob.day == 29) else dob.replace(year=dob.year + 18, day=28)
+                    days = (turn_18 - now).days
+                    if days > 0:
+                        time_metric = f"{days} Days Until 18"
+                    elif days < 0:
+                        time_metric = f"{abs(days)} Days Past 18"
+                    else:
+                        time_metric = "Turns 18 Today"
+                except Exception:
+                    pass
             alerts.append({
                 "type": "AGE_OUT", "severity": "high", "child_id": c["id"],
-                "child_code": c["child_code"], "message": f"{c['name']} (age {age}) is approaching age-out"
+                "child_code": c["child_code"], "message": f"{c['name']} (age {age}) is approaching age-out",
+                "time_metric": time_metric,
+                "title": f"Age Out Alert For {c['name']}",
+                "subtitle": f"Due on {turn_18.strftime('%m/%d/%Y')}" if time_metric and c["date_of_birth"] else f"Estimated Age: {age}"
             })
 
-    lfa_children = conn.execute("SELECT id, child_code, name FROM children WHERE is_lfa_eligible = 1").fetchall()
+    lfa_children = conn.execute(f"SELECT id, child_code, name FROM children WHERE is_lfa_eligible = 1 AND {where_clause}", params).fetchall()
     for c in lfa_children:
         alerts.append({
             "type": "LFA_ELIGIBLE", "severity": "medium", "child_id": c["id"],
-            "child_code": c["child_code"], "message": f"{c['name']} is eligible for Legal Free for Adoption"
+            "child_code": c["child_code"], "message": f"{c['name']} is eligible for Legal Free for Adoption",
+            "title": f"LFA Eligible For {c['name']}",
+            "subtitle": "Child is eligible for Legal Free for Adoption"
         })
 
+    no_contact_args = [six_months_ago] + params_c
     no_contact = conn.execute(
-        """SELECT c.id, c.child_code, c.name FROM children c
+        f"""SELECT c.id, c.child_code, c.name,
+               (SELECT MAX(visit_date) FROM family_visits WHERE child_id = c.id) as last_contact
+           FROM children c
            WHERE NOT EXISTS (
                SELECT 1 FROM family_visits fv
                WHERE fv.child_id = c.id AND fv.visit_date >= ?
-           )""",
-        (six_months_ago,),
+           ) AND {where_clause_c}""",
+        no_contact_args,
     ).fetchall()
     for c in no_contact:
+        time_metric = "No Contact Recorded"
+        if c["last_contact"]:
+            try:
+                last_contact = datetime.strptime(c["last_contact"], "%Y-%m-%d")
+                days = (now - last_contact).days
+                time_metric = f"{days} Days Since Contact"
+            except Exception:
+                pass
+                
         alerts.append({
             "type": "NO_FAMILY_CONTACT", "severity": "medium", "child_id": c["id"],
-            "child_code": c["child_code"], "message": f"{c['name']} has had no family contact for 6+ months"
+            "child_code": c["child_code"], "message": f"{c['name']} has had no family contact for 6+ months",
+            "time_metric": time_metric,
+            "title": f"No Family Contact For {c['name']}",
+            "subtitle": f"Last Contact: {c['last_contact']}" if c["last_contact"] else "Never visited"
         })
 
+    overdue_args = [today] + params_c
     overdue = conn.execute(
-        """SELECT d.*, c.child_code, c.name as child_name
+        f"""SELECT d.*, c.child_code, c.name as child_name
            FROM deadlines d
-           LEFT JOIN children c ON d.child_id = c.id
-           WHERE d.status = 'pending' AND d.due_date < ?""",
-        (today,),
+           JOIN children c ON d.child_id = c.id
+           WHERE d.status = 'pending' AND d.due_date < ? AND {where_clause_c}""",
+        overdue_args,
     ).fetchall()
     for d in overdue:
+        due_date = datetime.strptime(d["due_date"], "%Y-%m-%d")
+        days = (due_date - now).days
+        time_metric = f"{abs(days)} Days Overdue" if days < 0 else "Due Today"
         alerts.append({
             "type": "OVERDUE_DEADLINE", "severity": "high", "child_id": d["child_id"],
             "child_code": d["child_code"] or "",
-            "message": f"Overdue: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})"
+            "message": f"Overdue: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
+            "time_metric": time_metric,
+            "title": f"{d['notes']} For {d['child_name'] or 'Child'}",
+            "subtitle": f"Due on {due_date.strftime('%m/%d/%Y')}"
+        })
+
+    upcoming_args = [today, (now + timedelta(days=7)).strftime("%Y-%m-%d")] + params_c
+    upcoming = conn.execute(
+        f"""SELECT d.*, c.child_code, c.name as child_name
+           FROM deadlines d
+           JOIN children c ON d.child_id = c.id
+           WHERE d.status = 'pending' AND d.due_date >= ? AND d.due_date <= ? AND {where_clause_c}""",
+        upcoming_args,
+    ).fetchall()
+    for d in upcoming:
+        due_date = datetime.strptime(d["due_date"], "%Y-%m-%d")
+        days = (due_date - now).days
+        time_metric = f"{days} Days Left" if days > 0 else "Due Today"
+        alerts.append({
+            "type": "UPCOMING_DEADLINE", "severity": "medium", "child_id": d["child_id"],
+            "child_code": d["child_code"] or "",
+            "message": f"Due Soon: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
+            "time_metric": time_metric,
+            "title": f"{d['notes']} For {d['child_name'] or 'Child'}",
+            "subtitle": f"Due on {due_date.strftime('%m/%d/%Y')}"
         })
 
     return alerts
@@ -895,6 +1220,89 @@ def quarterly_report(quarter: Optional[int] = 1, year: Optional[int] = None, use
         "orders_issued": orders, "by_status": by_status, "cci_occupancy": cci_summary,
     }
 
+# ════════════════════════════════════════════════════════════════════════
+#  Async Reports (PDF Generation Simulation)
+# ════════════════════════════════════════════════════════════════════════
+import time
+
+def generate_pdf_report(report_id: str, report_type: str):
+    """Generate a real PDF using reportlab"""
+    try:
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import letter
+        import os
+        
+        # Ensure directory exists
+        os.makedirs("downloads/reports", exist_ok=True)
+        file_path = f"downloads/reports/{report_type}_{report_id[:8]}.pdf"
+        
+        c = canvas.Canvas(file_path, pagesize=letter)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, 750, f"BalKawach {report_type.capitalize()} Report")
+        
+        c.setFont("Helvetica", 12)
+        c.drawString(50, 710, f"Report ID: {report_id}")
+        c.drawString(50, 690, f"Generated At: {_iso_now()}")
+        
+        c.drawString(50, 650, "This is an automatically generated system report.")
+        c.drawString(50, 630, "System metrics and indicators are attached.")
+        
+        # Mock some data based on DB
+        db = get_db()
+        count = db.execute("SELECT COUNT(*) as c FROM children").fetchone()["c"]
+        c.drawString(50, 590, f"Total Children Registered: {count}")
+        
+        c.save()
+        
+        db.execute("UPDATE reports SET status = 'completed', file_path = ?, completed_at = ? WHERE id = ?", (file_path, _iso_now(), report_id))
+        db.commit()
+    except Exception as e:
+        db = get_db()
+        db.execute("UPDATE reports SET status = 'failed', error_message = ?, completed_at = ? WHERE id = ?", (str(e), _iso_now(), report_id))
+        db.commit()
+
+@router.post("/api/reports/async")
+def request_async_report(
+    background_tasks: BackgroundTasks,
+    request: Request,
+    report_type: str = "monthly",
+    user=Depends(require_roles(["dcpu_officer", "wcd_official", "system_admin"]))
+):
+    db = get_db()
+    report_id = str(uuid.uuid4())
+    
+    db.execute("""
+        INSERT INTO reports (id, type, status, requested_by)
+        VALUES (?, ?, 'processing', ?)
+    """, (report_id, report_type, user["id"]))
+    db.commit()
+    
+    background_tasks.add_task(generate_pdf_report, report_id, report_type)
+    
+    return {"message": "Report generation started", "report_id": report_id, "status": "processing"}
+
+
+@router.get("/api/reports/download/{report_id}")
+def download_report(report_id: str):
+    db = get_db()
+    report = db.execute("SELECT * FROM reports WHERE id = ?", (report_id,)).fetchone()
+    if not report or not report["file_path"]:
+        raise HTTPException(status_code=404, detail="Report not found or not completed")
+    
+    file_path = report["file_path"]
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Report file missing on server")
+        
+    return FileResponse(file_path, filename=f"Report_{report_id[:8]}.pdf", media_type="application/pdf")
+
+@router.get("/api/reports/async")
+def get_async_reports(
+    user=Depends(require_roles(["dcpu_officer", "wcd_official", "system_admin"]))
+):
+    db = get_db()
+    rows = db.execute("SELECT * FROM reports WHERE requested_by = ? ORDER BY requested_at DESC LIMIT 20", (user["id"],)).fetchall()
+    return _rows_to_list(rows)
+
 
 # ════════════════════════════════════════════════════════════════════════
 #  Audit Log & Miscellaneous
@@ -903,7 +1311,13 @@ def quarterly_report(quarter: Optional[int] = 1, year: Optional[int] = None, use
 @router.get("/api/audit", response_model=List[AuditLogResponse])
 def audit_log(limit: int = 200, user: dict = Depends(require_roles(DATA_READ_ROLES))):
     conn = get_db()
-    rows = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+    rows = conn.execute("""
+        SELECT a.*, u.username as user_name 
+        FROM audit_logs a 
+        LEFT JOIN users u ON a.user_id = u.id 
+        ORDER BY a.created_at DESC 
+        LIMIT ?
+    """, (limit,)).fetchall()
     return _rows_to_list(rows)
 
 
@@ -938,3 +1352,20 @@ def escalate_deadline(deadline_id: str, request: Request, user: dict = Depends(r
     conn.commit()
     audit(request, "ESCALATE_DEADLINE", f"Escalated deadline {deadline_id}", "deadline", deadline_id)
     return {"success": True}
+
+@router.get("/api/reports")
+def get_reports(user: dict = Depends(require_roles(["system_admin", "dcpu_officer", "wcd_official", "cwc_chairperson"]))):
+    conn = get_db()
+    # Basic statistics for the reports page
+    total_children = conn.execute("SELECT COUNT(*) as cnt FROM children").fetchone()["cnt"]
+    total_ccis = conn.execute("SELECT COUNT(*) as cnt FROM ccis").fetchone()["cnt"]
+    total_hearings = conn.execute("SELECT COUNT(*) as cnt FROM hearings").fetchone()["cnt"]
+    
+    status_distribution = conn.execute("SELECT legal_status, COUNT(*) as cnt FROM children GROUP BY legal_status").fetchall()
+    
+    return {
+        "total_children": total_children,
+        "total_ccis": total_ccis,
+        "total_hearings": total_hearings,
+        "status_distribution": {row["legal_status"]: row["cnt"] for row in status_distribution}
+    }

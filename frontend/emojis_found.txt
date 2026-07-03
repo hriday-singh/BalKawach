@@ -1,3 +1,0 @@
-src\components\layout\Sidebar.jsx
-src\components\layout\TopNav.jsx
-src\pages\AuditLog.jsx

@@ -1,23 +1,27 @@
 .recorderContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
   width: 100%;
   box-sizing: border-box;
+}
+
+.recorderContainer.idle {
+  width: auto;
+  justify-content: flex-start;
 }
 
 /* ===== Idle State ===== */
 .idleContainer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
-  width: 100%;
+  gap: 8px;
+  width: auto;
 }
 
 .micButton {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: var(--red, #C24A3A);
   color: #ffffff;
@@ -39,49 +43,23 @@
   transform: scale(0.95);
 }
 
-.tapHint {
+.uploadIconButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--surface, #F9F7F4);
+  border: 1px solid var(--border, #EEE6D8);
   color: var(--text-secondary, #6B6259);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.divider {
   display: flex;
   align-items: center;
-  width: 100%;
-  max-width: 200px;
-  gap: 12px;
-  color: var(--muted, #A79D8F);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background-color: var(--border, #EEE6D8);
-}
-
-.uploadButton {
-  background: transparent;
-  border: 1px dashed var(--muted, #A79D8F);
-  color: var(--text-secondary, #6B6259);
-  padding: 10px 24px;
-  border-radius: var(--radius, 8px);
-  font-size: 0.9rem;
-  font-weight: 500;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
+  transition: all 0.2s;
 }
 
-.uploadButton:hover {
-  border-color: var(--accent, #E4720C);
-  color: var(--accent, #E4720C);
-  background: var(--accent-bg, rgba(228, 114, 12, 0.05));
+.uploadIconButton:hover {
+  background-color: #EEE6D8;
+  color: var(--text, #2B2622);
 }
 
 /* ===== Recording State ===== */

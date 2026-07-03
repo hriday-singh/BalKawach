@@ -240,6 +240,51 @@
   pointer-events: none;
 }
 
+/* Quick Access Groups */
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(238, 230, 216, 0.4);
+  border-radius: var(--radius, 8px);
+  margin-top: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.groupHeader:first-child {
+  margin-top: 0;
+}
+
+.groupHeader:hover {
+  background: rgba(238, 230, 216, 0.8);
+}
+
+.groupTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text, #2B2622);
+}
+
+.groupIcon {
+  color: var(--muted, #A79D8F);
+  transition: transform 0.2s ease;
+}
+
+.groupIconOpen {
+  transform: rotate(180deg);
+}
+
+.groupContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
 .userAvatar {
   width: 42px;
   height: 42px;

@@ -34,6 +34,7 @@ const AuditLog = () => {
     }
     const term = searchTerm.toLowerCase();
     const filtered = logs.filter(log => 
+      (log.user_name && log.user_name.toLowerCase().includes(term)) ||
       (log.user_id && log.user_id.toLowerCase().includes(term)) ||
       (log.action && log.action.toLowerCase().includes(term)) ||
       (log.entity_type && log.entity_type.toLowerCase().includes(term)) ||
@@ -114,7 +115,9 @@ const AuditLog = () => {
                   filteredLogs.map((log, index) => (
                     <tr key={index} style={{ borderBottom: index !== filteredLogs.length - 1 ? '1px solid var(--border)' : 'none', transition: 'background-color 0.2s ease' }}>
                       <td style={{ padding: '16px 20px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{new Date(log.created_at).toLocaleString()}</td>
-                      <td style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '500', color: 'var(--text)' }}>{log.user_id}</td>
+                      <td style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '500', color: 'var(--text)' }}>
+                        {log.user_name || log.user_id || 'System'}
+                      </td>
                       <td style={{ padding: '16px 20px' }}>
                         <span className={`tag ${log.action.includes('CREATE') || log.action.includes('REGISTER') ? 'tag-green' : log.action.includes('DELETE') ? 'tag-red' : 'tag-accent'}`} style={{ padding: '4px 10px', borderRadius: '6px' }}>
                           {log.action}

@@ -1,15 +1,44 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Lock, User, LogIn, ChevronRight, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Shield, Lock, User, LogIn, ChevronRight, MessageSquare, ArrowLeft, ChevronDown, QrCode } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import MobileQR from '../components/ui/MobileQR';
 import styles from './Login.module.css';
 
-const QUICK_ACCESS_USERS = [
-  { username: 'admin', name: 'System Administrator', role: 'System Admin' },
-  { username: 'deepak.joshi', name: 'Deepak Joshi', role: 'CWC Chairperson' },
-  { username: 'meera.patel', name: 'Meera Patel', role: 'DCPU Officer' },
-  { username: 'lakshmi.devi', name: 'Lakshmi Devi', role: 'CCI Staff' },
-  { username: 'priya.sharma', name: 'Priya Sharma', role: 'CWC Member' },
-  { username: 'ananya.reddy', name: 'Ananya Reddy', role: 'WCD Official' }
+const QUICK_ACCESS_GROUPS = [
+  {
+    name: 'Global / State Overseers',
+    users: [
+      { username: 'admin', name: 'System Administrator', role: 'System Admin (Global)' },
+      { username: 'wcd.official', name: 'State Director', role: 'WCD Official (State)' },
+    ]
+  },
+  {
+    name: 'Hyderabad (Sishu Vihar)',
+    users: [
+      { username: 'hyd.dcpu', name: 'Meera Patel', role: 'DCPU Officer (Hyderabad)' },
+      { username: 'hyd.chair', name: 'Deepak Joshi', role: 'CWC Chairperson (Hyderabad)' },
+      { username: 'hyd.cwc', name: 'Priya Sharma', role: 'CWC Member (Hyderabad)' },
+      { username: 'hyd.staff', name: 'Lakshmi Devi', role: 'CCI Staff (Hyderabad)' },
+    ]
+  },
+  {
+    name: 'Visakhapatnam (Visakha Home)',
+    users: [
+      { username: 'vizag.dcpu', name: 'Arjun Kumar', role: 'DCPU Officer (Visakhapatnam)' },
+      { username: 'vizag.chair', name: 'Srinivas Reddy', role: 'CWC Chairperson (Visakhapatnam)' },
+      { username: 'vizag.cwc', name: 'Kavitha Nair', role: 'CWC Member (Visakhapatnam)' },
+      { username: 'vizag.staff', name: 'Rao Garu', role: 'CCI Staff (Visakhapatnam)' },
+    ]
+  },
+  {
+    name: 'Noida (Rainbow Home)',
+    users: [
+      { username: 'noida.dcpu', name: 'Ramesh Prasad', role: 'DCPU Officer (Noida)' },
+      { username: 'noida.chair', name: 'Ananya Sharma', role: 'CWC Chairperson (Noida)' },
+      { username: 'noida.cwc', name: 'Vikram Singh', role: 'CWC Member (Noida)' },
+      { username: 'noida.staff', name: 'Suresh Rao', role: 'CCI Staff (Noida)' },
+    ]
+  }
 ];
 
 export default function Login() {
@@ -20,6 +49,7 @@ export default function Login() {
   
   // Login screen state
   const [activeTab, setActiveTab] = useState('signin');
+  const [expandedGroup, setExpandedGroup] = useState('Global / State Overseers');
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState('');
@@ -42,8 +72,7 @@ export default function Login() {
       const user = await login(username, password);
       setPendingUser(user);
       setScreen('otp');
-      // Set default OTP
-      setOtp(['1', '2', '3', '4', '5', '6']);
+      setOtp(['', '', '', '', '', '']);
     } catch (err) {
       if (err.response?.data?.detail) {
         setError(err.response.data.detail);
@@ -67,7 +96,7 @@ export default function Login() {
         .then(u => {
           setPendingUser(u);
           setScreen('otp');
-          setOtp(['1', '2', '3', '4', '5', '6']);
+          setOtp(['', '', '', '', '', '']);
         })
         .catch(() => setError('Quick access login failed'))
         .finally(() => setIsLoading(false));
@@ -187,6 +216,13 @@ export default function Login() {
           >
             Quick Access
           </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'mobileqr' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('mobileqr')}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <QrCode size={14} /> Mobile App
+          </button>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
@@ -227,26 +263,47 @@ export default function Login() {
               )}
             </button>
           </form>
-        ) : (
+        ) : activeTab === 'quickaccess' ? (
           <div className={styles.quickAccessList}>
-            {QUICK_ACCESS_USERS.map((u) => (
-              <div 
-                key={u.username} 
-                className={`${styles.userCard} ${isLoading ? styles.userCardLoading : ''}`}
-                onClick={() => !isLoading && handleQuickAccess(u)}
-              >
-                <div className={styles.userAvatar}>
-                  {u.name.charAt(0)}
+            {QUICK_ACCESS_GROUPS.map((group) => (
+              <div key={group.name} className={styles.groupContainer}>
+                <div 
+                  className={styles.groupHeader}
+                  onClick={() => setExpandedGroup(expandedGroup === group.name ? null : group.name)}
+                >
+                  <span className={styles.groupTitle}>{group.name}</span>
+                  <ChevronDown 
+                    size={16} 
+                    className={`${styles.groupIcon} ${expandedGroup === group.name ? styles.groupIconOpen : ''}`} 
+                  />
                 </div>
-                <div className={styles.userInfo}>
-                  <div className={styles.userName}>{u.name}</div>
-                  <div className={styles.userRole}>{u.role}</div>
-                </div>
-                <ChevronRight size={18} className={styles.userChevron} />
+                
+                {expandedGroup === group.name && (
+                  <div className={styles.groupContent}>
+                    {group.users.map((u) => (
+                      <div 
+                        key={u.username} 
+                        className={`${styles.userCard} ${isLoading ? styles.userCardLoading : ''}`}
+                        onClick={() => !isLoading && handleQuickAccess(u)}
+                      >
+                        <div className={styles.userAvatar}>
+                          {u.name.charAt(0)}
+                        </div>
+                        <div className={styles.userInfo}>
+                          <div className={styles.userName}>{u.name}</div>
+                          <div className={styles.userRole}>{u.role}</div>
+                        </div>
+                        <ChevronRight size={18} className={styles.userChevron} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             <p className={styles.quickAccessHint}>Click a profile to login automatically</p>
           </div>
+        ) : (
+          <MobileQR />
         )}
       </div>
     </div>

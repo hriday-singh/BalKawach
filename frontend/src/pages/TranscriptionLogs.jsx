@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import CustomAudioPlayer from '../components/recorder/CustomAudioPlayer';
 import { Loader2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatRole } from '../utils/formatters';
 
 const TranscriptCell = ({ transcript }) => {
   const [expanded, setExpanded] = useState(false);
@@ -132,7 +133,7 @@ export default function TranscriptionLogs() {
 
       {loading ? (
         <div style={{ padding: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--muted)' }}>
-          <Loader2 style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} size={32} />
+          <Loader2 style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} size={32} />
           <p>Loading logs...</p>
         </div>
       ) : (
@@ -170,8 +171,8 @@ export default function TranscriptionLogs() {
                       </td>
                       <td data-label="Person">
                         <div style={{ fontWeight: 500, color: '#2C2822' }}>{personName}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#A79D8F', textTransform: 'capitalize' }}>
-                          {(log.role || '').replace('_', ' ')}
+                        <div style={{ fontSize: '0.85rem', color: '#A79D8F' }}>
+                          {formatRole(log.role)}
                         </div>
                       </td>
                       <td data-label="Hearing">

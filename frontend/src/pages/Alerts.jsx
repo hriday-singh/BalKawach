@@ -14,8 +14,16 @@ const Alerts = () => {
     const fetchAlerts = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/dashboard/alerts');
-        setAlerts(response.data);
+        const [alertsRes] = await Promise.all([
+          axios.get('/api/dashboard/alerts')
+        ]);
+        
+        const combined = alertsRes.data.map(a => ({
+            ...a,
+            sortScore: a.severity === 'high' ? 100 : a.severity === 'medium' ? 50 : 10
+        })).sort((a, b) => b.sortScore - a.sortScore);
+        
+        setAlerts(combined);
         setError(null);
       } catch (err) {
         console.error("Failed to fetch alerts", err);
@@ -99,6 +107,13 @@ const Alerts = () => {
                         <FileText size={14} className={styles.metaIcon} />
                         <span className={styles.metaLabel}>Child Code:</span>
                         <span className={styles.metaValue}>{alert.child_code}</span>
+                      </div>
+                    )}
+                    {alert.time_metric && (
+                      <div className={styles.metaItem}>
+                        <span className={styles.metaLabel} style={{ color: alert.severity === 'high' ? '#C24A3A' : '#E4A11B', fontWeight: 600 }}>
+                          {alert.time_metric}
+                        </span>
                       </div>
                     )}
                   </div>

@@ -1181,10 +1181,13 @@ tr.clickable { cursor: pointer; }
 }
 
 @media print {
+  @page { margin: 0; }
   body * { visibility: hidden; }
+  .print-order {
+    display: block !important;
+  }
   .print-order, .print-order * {
     visibility: visible !important;
-    display: block !important;
   }
   .print-order {
     position: absolute;
@@ -1225,6 +1228,9 @@ tr.clickable { cursor: pointer; }
     font-size: 11pt;
     color: #000;
     background: #fff;
+  }
+  .print-order tr:last-child td {
+    border-bottom: 1px solid #000 !important;
   }
   .print-order .order-body {
     margin: 20px 0;

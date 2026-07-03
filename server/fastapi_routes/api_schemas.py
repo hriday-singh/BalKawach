@@ -26,6 +26,7 @@ class ChildResponse(BaseModel):
     physical_description: Optional[str] = None
     cci_id: str
     cci_name: Optional[str] = None
+    cci_district: Optional[str] = None
     district: str
     legal_status: str
     is_lfa_eligible: int
@@ -111,7 +112,8 @@ class OrderResponse(BaseModel):
     district: str
     created_at: str
     updated_at: str
-    child: Optional[ChildResponse] = None
+    updated_by: Optional[str] = None
+    child: Optional[dict] = None
     print_format: Optional[bool] = None
     generated_at: Optional[str] = None
 
@@ -208,6 +210,10 @@ class AlertResponse(BaseModel):
     child_id: str
     child_code: str
     message: str
+    days_left: Optional[int] = None
+    time_metric: Optional[str] = None
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
 
 class MonthlyReportResponse(BaseModel):
     month: int
@@ -228,6 +234,18 @@ class QuarterlyReportResponse(BaseModel):
     by_status: Dict[str, int]
     cci_occupancy: List[Dict[str, Any]]
 
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    full_name: str
+    role: str
+    district: str
+    location: Optional[str] = None
+    cci_id: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: Optional[bool] = True
+
 class User(BaseModel):
     id: str
     username: str
@@ -244,6 +262,7 @@ class User(BaseModel):
 class AuditLogResponse(BaseModel):
     id: str
     user_id: Optional[str] = None
+    user_name: Optional[str] = None
     action: str
     entity_type: Optional[str] = None
     entity_id: Optional[str] = None
@@ -265,7 +284,6 @@ class ChildUpdateRequest(BaseModel):
 class CCICreateRequest(BaseModel):
     name: str
     district: str
-    type: Optional[str] = None
     capacity: int
     contact_person: Optional[str] = None
     contact_phone: Optional[str] = None
@@ -274,7 +292,6 @@ class CCICreateRequest(BaseModel):
 class CCIUpdateRequest(BaseModel):
     name: Optional[str] = None
     district: Optional[str] = None
-    type: Optional[str] = None
     capacity: Optional[int] = None
     contact_person: Optional[str] = None
     contact_phone: Optional[str] = None

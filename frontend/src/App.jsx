@@ -10,6 +10,11 @@ import AuditLog from './pages/AuditLog';
 import TranscriptionLogs from './pages/TranscriptionLogs';
 import Login from './pages/Login';
 import DummyPage from './pages/DummyPage';
+import Users from './pages/Users';
+import Orders from './pages/Orders';
+import PrintOrder from './pages/PrintOrder';
+import CCIs from './pages/CCIs';
+import Reports from './pages/Reports';
 import './index.css';
 
 const ProtectedRoute = ({ allowedRoles, children }) => {
@@ -23,7 +28,7 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
 };
 
 const getDefaultRoute = (role) => {
-  if (role === 'cwc_member' || role === 'cci_staff') return '/children';
+  if (role === 'cci_staff') return '/children';
   return '/dashboard';
 };
 
@@ -36,11 +41,17 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/print/order/:id" element={
+        <ProtectedRoute allowedRoles={['system_admin', 'cwc_chairperson', 'cwc_member']}>
+          <PrintOrder />
+        </ProtectedRoute>
+      } />
+      
       <Route path="/" element={<PageShell />}>
         <Route index element={<Navigate to={getDefaultRoute(user.role)} replace />} />
         
         <Route path="dashboard" element={
-          <ProtectedRoute allowedRoles={['system_admin', 'cwc_chairperson', 'dcpu_officer', 'wcd_official']}>
+          <ProtectedRoute allowedRoles={['system_admin', 'cwc_chairperson', 'cwc_member', 'dcpu_officer', 'wcd_official']}>
             <Dashboard />
           </ProtectedRoute>
         } />
@@ -78,6 +89,30 @@ function AppRoutes() {
         <Route path="transcription-logs" element={
           <ProtectedRoute allowedRoles={['system_admin']}>
             <TranscriptionLogs />
+          </ProtectedRoute>
+        } />
+
+        <Route path="users" element={
+          <ProtectedRoute allowedRoles={['system_admin']}>
+            <Users />
+          </ProtectedRoute>
+        } />
+
+        <Route path="orders" element={
+          <ProtectedRoute allowedRoles={['system_admin', 'cwc_chairperson', 'cwc_member']}>
+            <Orders />
+          </ProtectedRoute>
+        } />
+
+        <Route path="ccis" element={
+          <ProtectedRoute allowedRoles={['system_admin', 'dcpu_officer']}>
+            <CCIs />
+          </ProtectedRoute>
+        } />
+
+        <Route path="reports" element={
+          <ProtectedRoute allowedRoles={['system_admin', 'dcpu_officer', 'wcd_official']}>
+            <Reports />
           </ProtectedRoute>
         } />
 

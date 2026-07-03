@@ -1,30 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Calendar, LineChart } from 'lucide-react';
+import { ChevronLeft, Calendar, LineChart, Users, FileText } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import StatusUpdateModal from '../components/forms/StatusUpdateModal';
+import FamilyVisitModal from '../components/forms/FamilyVisitModal';
 import styles from './ChildProfile.module.css';
 
 const ChildProfile = ({ id }) => {
   const [child, setChild] = useState(null);
+  const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [activeHearing, setActiveHearing] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const navigate = useNavigate();
+  const { token, user } = useAuth();
+  
+  const canViewOrders = ['cwc_member', 'cwc_chairperson', 'dcpu_officer', 'system_admin', 'wcd_official'].includes(user?.role);
+
+  const fetchChildAndVisits = async () => {
+    try {
+      setLoading(true);
+      const [childRes, visitsRes, hearingsRes] = await Promise.all([
+        axios.get(`/api/children/${id}`),
+        axios.get(`/api/children/${id}/visits`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`/api/hearings`).catch(() => ({ data: [] }))
+      ]);
+      setChild(childRes.data.data || childRes.data);
+      setVisits(visitsRes.data || []);
+
+      const allHearings = hearingsRes.data || [];
+      const childHearings = allHearings.filter(h => h.child_id == id);
+      setActiveHearing(childHearings.some(h => h.status === 'scheduled' || h.status === 'in_progress'));
+    } catch (err) {
+      console.error('Error fetching child details:', err);
+      setError(err.message || 'Failed to fetch child details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchChild = async () => {
-      try {
-        const response = await axios.get(`/api/children/${id}`);
-        setChild(response.data.data || response.data);
-      } catch (err) {
-        console.error('Error fetching child details:', err);
-        setError(err.message || 'Failed to fetch child details');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     if (id) {
-      fetchChild();
+      fetchChildAndVisits();
     }
   }, [id]);
 
@@ -59,7 +80,14 @@ const ChildProfile = ({ id }) => {
 
   const formatEnum = (str) => {
     if (!str) return '';
-    return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  };
+
+  const handleHearingClick = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      navigate(`/hearings?child_id=${child.id}`);
+    }, 500);
   };
 
   return (
@@ -103,7 +131,11 @@ const ChildProfile = ({ id }) => {
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>CURRENT CCI</span>
-            <span className={styles.infoValue}>{child.cci_name || child.cci_id || 'Not assigned'}</span>
+            <span className={styles.infoValue}>
+              {child.cci_name 
+                ? `${child.cci_name}${child.cci_district ? `, ${child.cci_district}` : ''}` 
+                : (child.cci_id || 'Not assigned')}
+            </span>
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>LEGAL STATUS</span>
@@ -113,18 +145,29 @@ const ChildProfile = ({ id }) => {
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.btnPrimary} onClick={() => navigate(`/hearings?child_id=${child.id}`)}>
+        <button className={styles.btnPrimary} onClick={handleHearingClick}>
           <Calendar size={18} />
-          Schedule hearing
+          {activeHearing ? 'Go to hearing' : 'Schedule hearing'}
         </button>
-        <button className={styles.btnSecondary} onClick={() => alert("Update status feature coming soon!")}>
+        <button className={styles.btnSecondary} onClick={() => setIsStatusModalOpen(true)}>
           <LineChart size={18} />
           Update status
         </button>
+        <button className={styles.btnSecondary} onClick={() => setIsVisitModalOpen(true)}>
+          <Users size={18} />
+          Log Visit
+        </button>
+        {canViewOrders && (
+          <button className={styles.btnSecondary} onClick={() => navigate(`/orders?search=${encodeURIComponent(child.child_code || child.name)}`)}>
+            <FileText size={18} />
+            CWC Orders
+          </button>
+        )}
       </div>
 
-      <div className={styles.timelineSection}>
-        <h2 className={styles.timelineTitle}>Case timeline</h2>
+      <div className={styles.timelineContainer}>
+        <div className={styles.timelineSection}>
+          <h2 className={styles.timelineTitle}>Case timeline</h2>
         
         <div className={styles.timeline}>
           {child.case_history && child.case_history.length > 0 ? (
@@ -150,6 +193,74 @@ const ChildProfile = ({ id }) => {
           )}
         </div>
       </div>
+      <div className={styles.timelineSection} style={{ marginTop: '2rem' }}>
+        <h2 className={styles.timelineTitle}>Family Visits</h2>
+        <div className={styles.timeline}>
+          {visits.length > 0 ? (
+            visits.map((visit, index) => (
+              <div key={index} className={styles.timelineItem}>
+                <div className={styles.timelineIconWrapper}>
+                  <div className={`${styles.timelineIcon} ${styles.iconTeal}`}></div>
+                  {index < visits.length - 1 && <div className={styles.timelineLine}></div>}
+                </div>
+                <div className={styles.timelineContent}>
+                  <div className={styles.timelineDate}>{formatDate(visit.visit_date)}</div>
+                  <h3 className={styles.timelineEventType}>{visit.visitor_name} ({visit.relationship})</h3>
+                  <p className={styles.timelineDesc}>Duration: {visit.duration_minutes} mins</p>
+                  {visit.notes && <p className={styles.timelineAuthor}>Notes: {visit.notes}</p>}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className={styles.noHistory}>No visits logged yet.</p>
+          )}
+        </div>
+      </div>
+      </div>
+
+      {isStatusModalOpen && (
+        <StatusUpdateModal 
+          child={child} 
+          token={token} 
+          onClose={() => setIsStatusModalOpen(false)} 
+          onStatusUpdated={() => {
+            setIsStatusModalOpen(false);
+            fetchChildAndVisits();
+          }} 
+        />
+      )}
+
+      {isVisitModalOpen && (
+        <FamilyVisitModal 
+          childId={child.id} 
+          token={token} 
+          onClose={() => setIsVisitModalOpen(false)} 
+          onVisitLogged={() => {
+            setIsVisitModalOpen(false);
+            fetchChildAndVisits();
+          }} 
+        />
+      )}
+
+      {isTransitioning && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexDirection: 'column', color: 'white'
+        }}>
+          <div style={{ 
+            marginBottom: '1rem', width: '40px', height: '40px', 
+            border: '4px solid rgba(255,255,255,0.3)', borderTopColor: 'white', 
+            borderRadius: '50%', animation: 'spin 1s linear infinite' 
+          }}>
+            <style>
+              {`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}
+            </style>
+          </div>
+          <p style={{ fontWeight: 600 }}>Preparing hearing console...</p>
+        </div>
+      )}
     </div>
   );
 };

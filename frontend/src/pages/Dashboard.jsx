@@ -4,6 +4,7 @@ import { List, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
+import { formatRole } from '../utils/formatters';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -102,7 +103,7 @@ const Dashboard = () => {
       <div className={styles.heroCard} onClick={() => navigate('/children')} style={{ cursor: 'pointer' }}>
         <div className={styles.heroGlow}></div>
         <div className={styles.heroSubtitle}>
-          {user?.location?.toUpperCase()} · {user?.role?.replace(/_/g, ' ').toUpperCase()}
+          {user?.location?.toUpperCase()} · {formatRole(user?.role).toUpperCase()}
         </div>
         <div className={styles.heroTitle}>
           <span className={styles.heroNumber}>{totalChildren}</span>
@@ -174,34 +175,65 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Needs Attention Section */}
+      {/* Combined Needs Attention & Accountability Section */}
       <div className={styles.sectionHeader}>
-        <h3 className={styles.sectionTitle}>Needs attention</h3>
+        <h3 className={styles.sectionTitle}>Needs Attention & Accountability</h3>
       </div>
       
-      {alerts.slice(0, 3).map((alert, i) => (
-        <div 
-          key={i} 
-          className={styles.alertCard}
-          onClick={() => alert.child_id ? navigate(`/children?id=${alert.child_id}`) : navigate('/alerts')}
-        >
-          <div className={styles.alertIcon}>
-            <AlertTriangle size={20} color={alert.severity === 'high' ? '#C24A3A' : '#E4A11B'} />
+      {(() => {
+        const combinedItems = alerts.map((a, index) => ({
+            id: `alert-${a.child_id || 'sys'}-${a.type}-${index}`,
+            isAlert: true,
+            title: a.type.replace(/_/g, ' '),
+            desc: a.message,
+            child_id: a.child_id,
+            severity: a.severity,
+            sortScore: a.severity === 'high' ? 100 : a.severity === 'medium' ? 50 : 10,
+            original: a
+        })).sort((a, b) => b.sortScore - a.sortScore);
+
+        if (combinedItems.length === 0) {
+          return <div style={{ color: '#6B6259', fontSize: '0.9rem', padding: '16px 0' }}>No pending alerts or deadlines. You're all caught up!</div>;
+        }
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {combinedItems.slice(0, 8).map((item, i) => {
+              const isHigh = item.severity === 'high';
+              const bgClass = isHigh ? styles.alertHigh : styles.alertMedium;
+              const titleText = item.original.title || item.title;
+              const subtitleText = item.original.subtitle || item.desc;
+              
+              let actionText = '';
+              if (item.original.type === 'OVERDUE_DEADLINE' || item.original.type === 'AGE_OUT') {
+                  actionText = 'ACTION REQUIRED IMMEDIATELY';
+              } else if (item.original.type === 'UPCOMING_DEADLINE') {
+                  actionText = 'ACTION REQUIRED SOON';
+              }
+              
+              return (
+                <div 
+                  key={item.id + i} 
+                  className={`${styles.alertCard} ${bgClass}`}
+                  onClick={() => item.child_id ? navigate(`/children?id=${item.child_id}`) : navigate('/alerts')}
+                >
+                  <div className={styles.alertMain}>
+                    <div className={styles.alertTitle}>{titleText}</div>
+                    <div className={styles.alertSubtitle}>{subtitleText}</div>
+                  </div>
+                  {(item.original.time_metric || actionText) && (
+                    <div className={styles.alertRight}>
+                      {item.original.time_metric && <div className={styles.alertMetric}>{item.original.time_metric}</div>}
+                      {actionText && <div className={styles.alertAction}>{actionText}</div>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <div className={styles.alertContent}>
-            <div className={styles.alertTitleRow}>
-              <span className={styles.alertTitle}>{alert.type.replace(/_/g, ' ')}</span>
-              {alert.severity === 'high' && <span className={styles.alertBadge}>URGENT</span>}
-            </div>
-            <p className={styles.alertDesc}>{alert.message}</p>
-          </div>
-        </div>
-      ))}
-      {alerts.length === 0 && (
-        <div style={{ color: '#6B6259', fontSize: '0.9rem', padding: '16px 0' }}>No pending alerts. You're all caught up!</div>
-      )}
-      
-      
+        );
+      })()}
+
 
     </div>
   );

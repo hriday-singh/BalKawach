@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, User, Filter } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import ChildProfile from './ChildProfile';
+import ChildRegistrationForm from '../components/forms/ChildRegistrationForm';
 import styles from './Children.module.css';
 
 const Children = () => {
@@ -12,7 +14,9 @@ const Children = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isRegModalOpen, setIsRegModalOpen] = useState(false);
   const filterRef = React.useRef(null);
+  const { user, token } = useAuth();
   
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -92,8 +96,21 @@ const Children = () => {
   return (
     <div className={`page active ${styles.container}`} id="page-children">
       <div className={styles.header}>
-        <h2 className={styles.title}>Children</h2>
-        <p className={styles.subtitle}>Manage children under care</p>
+        <div>
+          <h2 className={styles.title}>Children</h2>
+          <p className={styles.subtitle}>Manage children under care</p>
+        </div>
+        {['cci_staff', 'dcpu_officer', 'system_admin'].includes(user?.role) && (
+          <button 
+            onClick={() => setIsRegModalOpen(true)}
+            style={{ 
+              background: 'var(--accent)', color: 'var(--bg)', border: 'none', 
+              padding: '0.6rem 1.2rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' 
+            }}
+          >
+            + Add Child
+          </button>
+        )}
       </div>
 
       <div className={styles.controls}>
@@ -194,6 +211,17 @@ const Children = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {isRegModalOpen && (
+        <ChildRegistrationForm 
+          token={token} 
+          onClose={() => setIsRegModalOpen(false)} 
+          onChildAdded={(newChild) => {
+            setChildren(prev => [newChild, ...prev]);
+            setIsRegModalOpen(false);
+          }} 
+        />
       )}
     </div>
   );

@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Trash2, Send, X, Check } from 'lucide-react';
+import { Mic, Trash2, Send, X, Check, Paperclip, Keyboard } from 'lucide-react';
 import CustomAudioPlayer from './CustomAudioPlayer';
 import styles from './AudioRecorder.module.css';
 
-const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
+const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwitchToText }) => {
   const [state, setState] = useState('idle'); // 'idle' | 'recording' | 'done'
+
+  const updateState = (newState) => {
+    setState(newState);
+    if (onStateChange) onStateChange(newState);
+  };
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState(null);
   
@@ -41,7 +46,7 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         setAudioBlob(blob);
-        setState('done');
+        updateState('done');
         cleanupStream();
       };
       
@@ -60,7 +65,7 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
       amplitudeHistoryRef.current = [];
       
       mediaRecorder.start(100);
-      setState('recording');
+      updateState('recording');
       setRecordingTime(0);
       
       timerRef.current = setInterval(() => {
@@ -160,7 +165,7 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
     if (mediaRecorderRef.current && state === 'recording') {
       if (cancel) {
         mediaRecorderRef.current.onstop = cleanupAll;
-        setState('idle');
+        updateState('idle');
       }
       mediaRecorderRef.current.stop();
     }
@@ -188,7 +193,7 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
 
   const cleanupAll = () => {
     cleanupStream();
-    setState('idle');
+    updateState('idle');
     setRecordingTime(0);
     setAudioBlob(null);
     amplitudeHistoryRef.current = [];
@@ -225,7 +230,7 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
     if (audioBlob && onRecordingComplete) {
       onRecordingComplete(audioBlob, recordingTime, amplitudeHistoryRef.current);
     }
-    setState('idle');
+    updateState('idle');
     setAudioBlob(null);
   };
 
@@ -239,25 +244,31 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile }) => {
 
   if (state === 'idle') {
     return (
-      <div className={styles.recorderContainer}>
+      <div className={`${styles.recorderContainer} ${styles.idle}`}>
         <div className={styles.idleContainer}>
           <button 
             className={styles.micButton} 
             onClick={startRecording}
-            aria-label="Start recording"
+            title="Start Recording"
           >
-            <Mic size={32} />
+            <Mic size={20} color="#fff" />
           </button>
-          <span className={styles.tapHint}>Tap to record the hearing</span>
-          
-          <div className={styles.divider}>or</div>
-          
           <button 
-            className={styles.uploadButton}
+            className={styles.uploadIconButton}
             onClick={() => fileInputRef.current?.click()}
+            title="Upload Audio File"
           >
-            Upload audio file
+            <Paperclip size={18} />
           </button>
+          {onSwitchToText && (
+            <button 
+              className={styles.uploadIconButton}
+              onClick={onSwitchToText}
+              title="Type manually"
+            >
+              <Keyboard size={18} />
+            </button>
+          )}
           <input 
             type="file" 
             ref={fileInputRef} 

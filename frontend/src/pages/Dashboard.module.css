@@ -315,16 +315,14 @@
 }
 
 .alertCard {
-  background: #fff;
-  border: 1px solid var(--border, #EEE6D8);
-  border-left: 4px solid var(--red, #C24A3A);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 16px 20px;
   display: flex;
-  gap: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  justify-content: space-between;
+  align-items: center;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .alertCard:hover {
@@ -332,51 +330,67 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
-.alertIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(194, 74, 58, 0.1);
-  color: var(--red, #C24A3A);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.alertHigh {
+  background-color: #EFDFDB; /* light red block */
 }
 
-.alertContent {
-  flex: 1;
+.alertMedium {
+  background-color: #F2E3C6; /* richer light gold block */
 }
 
-.alertTitleRow {
+.alertMain {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 6px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .alertTitle {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--text, #2B2622);
+  color: #3A2D27;
 }
 
-.alertBadge {
-  background: rgba(194, 74, 58, 0.1);
-  color: var(--red, #C24A3A);
-  padding: 2px 8px;
-  border-radius: 4px;
+.alertMedium .alertTitle {
+  color: #4A3C28;
+}
+
+.alertSubtitle {
+  font-size: 0.85rem;
+  color: #998174;
+}
+
+.alertMedium .alertSubtitle {
+  color: #A69279;
+}
+
+.alertRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+
+.alertMetric {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #BA4334;
+}
+
+.alertMedium .alertMetric {
+  color: #D3740D;
+}
+
+.alertAction {
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.05em;
+  color: #C24A3A;
+  text-transform: uppercase;
 }
 
-.alertDesc {
-  font-size: 0.85rem;
-  color: var(--text-secondary, #6B6259);
-  line-height: 1.4;
-  margin: 0;
+.alertMedium .alertAction {
+  color: #D3740D;
 }
 
 /* Admin Modules */
@@ -564,5 +578,16 @@
 
   .statCard {
     padding: 16px 12px;
+  }
+
+  .alertCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .alertRight {
+    align-items: flex-start;
+    text-align: left;
   }
 }

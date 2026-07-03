@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, LayoutDashboard, Users, Scale, Bell, Settings, ChevronDown } from 'lucide-react';
+import { Shield, LayoutDashboard, Users, Scale, Bell, Settings, ChevronDown, Layers } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './TopNav.module.css';
@@ -8,8 +8,10 @@ export function TopNav() {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const adminDropdownRef = useRef(null);
+  const workspaceDropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -19,6 +21,9 @@ export function TopNav() {
       }
       if (adminDropdownRef.current && !adminDropdownRef.current.contains(event.target)) {
         setAdminDropdownOpen(false);
+      }
+      if (workspaceDropdownRef.current && !workspaceDropdownRef.current.contains(event.target)) {
+        setWorkspaceDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -41,7 +46,7 @@ export function TopNav() {
       </div>
 
       <div className={styles.desktopNav}>
-        {['system_admin', 'cwc_chairperson', 'dcpu_officer', 'wcd_official'].includes(user?.role) && (
+        {['system_admin', 'cwc_chairperson', 'cwc_member', 'dcpu_officer', 'wcd_official'].includes(user?.role) && (
           <NavLink to="/dashboard" className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}>
             <LayoutDashboard size={16} /> Dashboard
           </NavLink>
@@ -53,16 +58,38 @@ export function TopNav() {
           </NavLink>
         )}
         
-        {['system_admin', 'cwc_chairperson', 'cwc_member'].includes(user?.role) && (
-          <NavLink to="/hearings" className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}>
-            <Scale size={16} /> Hearings
-          </NavLink>
-        )}
-        
         {['system_admin', 'cwc_chairperson', 'cwc_member', 'dcpu_officer', 'wcd_official'].includes(user?.role) && (
           <NavLink to="/alerts" className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}>
             <Bell size={16} /> Alerts
           </NavLink>
+        )}
+
+        {/* Workspace Dropdown for nested items */}
+        {['system_admin', 'cwc_chairperson', 'cwc_member', 'dcpu_officer', 'wcd_official'].includes(user?.role) && (
+          <div className={styles.adminDropdown} ref={workspaceDropdownRef}>
+            <button 
+              className={`${styles.navLink} ${styles.adminBtn} ${workspaceDropdownOpen ? styles.active : ''}`}
+              onClick={() => setWorkspaceDropdownOpen(!workspaceDropdownOpen)}
+            >
+              <Layers size={16} /> Workspace <ChevronDown size={14} />
+            </button>
+            {workspaceDropdownOpen && (
+              <div className={styles.adminDropdownMenu}>
+                {['system_admin', 'cwc_chairperson', 'cwc_member'].includes(user?.role) && (
+                  <NavLink to="/hearings" className={styles.adminDropdownItem} onClick={() => setWorkspaceDropdownOpen(false)}>Hearings</NavLink>
+                )}
+                {['system_admin', 'cwc_chairperson', 'cwc_member'].includes(user?.role) && (
+                  <NavLink to="/orders" className={styles.adminDropdownItem} onClick={() => setWorkspaceDropdownOpen(false)}>CWC Orders</NavLink>
+                )}
+                {['system_admin', 'dcpu_officer'].includes(user?.role) && (
+                  <NavLink to="/ccis" className={styles.adminDropdownItem} onClick={() => setWorkspaceDropdownOpen(false)}>CCI Monitoring</NavLink>
+                )}
+                {['system_admin', 'dcpu_officer', 'wcd_official'].includes(user?.role) && (
+                  <NavLink to="/reports" className={styles.adminDropdownItem} onClick={() => setWorkspaceDropdownOpen(false)}>Reports</NavLink>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {user?.role === 'system_admin' && (
@@ -75,6 +102,7 @@ export function TopNav() {
             </button>
             {adminDropdownOpen && (
               <div className={styles.adminDropdownMenu}>
+                <NavLink to="/users" className={styles.adminDropdownItem} onClick={() => setAdminDropdownOpen(false)}>Users</NavLink>
                 <NavLink to="/system" className={styles.adminDropdownItem} onClick={() => setAdminDropdownOpen(false)}>System Status</NavLink>
                 <NavLink to="/audit" className={styles.adminDropdownItem} onClick={() => setAdminDropdownOpen(false)}>Audit Logs</NavLink>
                 <NavLink to="/transcription-logs" className={styles.adminDropdownItem} onClick={() => setAdminDropdownOpen(false)}>Transcription Logs</NavLink>

@@ -54,10 +54,14 @@ async def global_exception_handler(request: Request, exc: Exception):
         )
     return JSONResponse(status_code=500, content={"error": "Internal Server Error"})
 
+from server.cron import cron_worker
+import asyncio
+
 # Initialize DB on startup
 @app.on_event("startup")
 async def startup_event():
     init_db()
+    asyncio.create_task(cron_worker())
 
 if __name__ == "__main__":
     import uvicorn
