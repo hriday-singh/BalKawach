@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import styles from './Users.module.css';
 
 import { formatRole } from '../utils/formatters';
 
@@ -87,55 +88,44 @@ export default function Users() {
   if (error) return <div style={{ padding: '2rem', color: 'var(--red)' }}>Error: {error}</div>;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 600 }}>User Management</h1>
+    <div className={styles.pageContainer}>
+      <div className={styles.headerContainer}>
+        <h1 className={styles.title}>User Management</h1>
         <button 
           onClick={() => setIsModalOpen(true)}
-          style={{ 
-            background: 'var(--accent)', 
-            color: 'var(--bg)', 
-            border: 'none', 
-            padding: '0.75rem 1.5rem', 
-            borderRadius: '6px', 
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
+          className={styles.addBtn}
         >
           Add User
         </button>
       </div>
 
-      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      {/* Desktop Table View */}
+      <div className={styles.desktopTable}>
+        <table className={styles.table}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
-              <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--muted)' }}>Name</th>
-              <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--muted)' }}>Username</th>
-              <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--muted)' }}>Role</th>
-              <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--muted)' }}>District</th>
-              <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--muted)' }}>Status</th>
+            <tr>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>District</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {users.map(u => (
-              <tr key={u.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '1rem' }}>{u.full_name}</td>
-                <td style={{ padding: '1rem', color: 'var(--muted)' }}>{u.username}</td>
-                <td style={{ padding: '1rem' }}>
+              <tr key={u.id}>
+                <td>{u.full_name}</td>
+                <td style={{ color: 'var(--muted)' }}>{u.username}</td>
+                <td>
                   <span style={{ 
-                    background: 'var(--accent-bg)', 
-                    color: 'var(--accent)',
-                    padding: '0.35rem 0.85rem', 
-                    borderRadius: '999px', 
-                    fontSize: '0.8rem',
-                    fontWeight: 600
+                    background: 'var(--accent-bg)', color: 'var(--accent)',
+                    padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600
                   }}>
                     {formatRole(u.role)}
                   </span>
                 </td>
-                <td style={{ padding: '1rem' }}>{u.district}</td>
-                <td style={{ padding: '1rem' }}>
+                <td>{u.district}</td>
+                <td>
                   {u.is_active ? 
                     <span style={{ color: 'var(--green)' }}>Active</span> : 
                     <span style={{ color: 'var(--red)' }}>Inactive</span>
@@ -145,6 +135,42 @@ export default function Users() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className={styles.mobileCards}>
+        {users.map(u => (
+          <div key={u.id} className={styles.userCard}>
+            <div className={styles.cardHeader}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span className={styles.cardName}>{u.full_name}</span>
+                <span className={styles.cardUsername}>{u.username}</span>
+              </div>
+              <span style={{ 
+                background: 'var(--accent-bg)', color: 'var(--accent)',
+                padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600
+              }}>
+                {formatRole(u.role)}
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+              <div className={styles.cardRow}>
+                <span style={{ color: 'var(--muted)' }}>District:</span>
+                <span>{u.district}</span>
+              </div>
+              <div className={styles.cardRow}>
+                <span style={{ color: 'var(--muted)' }}>Status:</span>
+                <span>
+                  {u.is_active ? 
+                    <span style={{ color: 'var(--green)', fontWeight: 500 }}>Active</span> : 
+                    <span style={{ color: 'var(--red)', fontWeight: 500 }}>Inactive</span>
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {isModalOpen && (

@@ -9,15 +9,15 @@ export default defineConfig({
     port: 9122,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:9120',
+        target: process.env.API_URL || 'http://127.0.0.1:9120',
         changeOrigin: true,
       },
       '/audio': {
-        target: 'http://127.0.0.1:9120',
+        target: process.env.API_URL || 'http://127.0.0.1:9120',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://127.0.0.1:9120',
+        target: process.env.API_URL || 'http://127.0.0.1:9120',
         changeOrigin: true,
       }
     }

@@ -2,6 +2,7 @@ import sqlite3
 import uuid
 import random
 import os
+import json
 from datetime import datetime, timedelta, timezone
 
 import sys
@@ -30,6 +31,16 @@ def generate_mock_data():
     conn = get_db()
     seed_data(conn)
     clear_transactional_data(conn)
+
+    # Owned by transcription_server/db.py; create here too since seeding can run before that server does.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS transcription_jobs (
+            job_id TEXT PRIMARY KEY, user_id TEXT, audio_path TEXT, language TEXT, status TEXT,
+            ctc_transcript TEXT, rnnt_transcript TEXT, final_transcript TEXT,
+            created_at TIMESTAMP, completed_at TIMESTAMP, hearing_id TEXT
+        )
+    """)
+    conn.execute("DELETE FROM transcription_jobs")
 
     now = datetime.now(timezone.utc)
     ccis = conn.execute("SELECT * FROM ccis").fetchall()
@@ -150,8 +161,8 @@ def generate_mock_data():
                 due_date = admission_date + timedelta(days=30)
                 d_status = 'pending' if scenario == 'recent_inquiry' else 'overdue'
                 conn.execute(
-                    "INSERT INTO deadlines (id, child_id, deadline_type, due_date, status, assigned_to) VALUES (?,?,?,?,?,?)",
-                    (_uuid(), child_id, "30-day Inquiry", _iso_date(due_date), d_status, cwc_member['id'])
+                    "INSERT INTO deadlines (id, child_id, deadline_type, notes, due_date, status, assigned_to) VALUES (?,?,?,?,?,?,?)",
+                    (_uuid(), child_id, "30_DAY_INQUIRY", "30-day inquiry report due", _iso_date(due_date), d_status, cwc_member['id'])
                 )
                 if d_status == 'overdue':
                     conn.execute(
@@ -162,25 +173,43 @@ def generate_mock_data():
             if scenario == 'surrendered_reconsideration':
                 due_date = admission_date + timedelta(days=60)
                 conn.execute(
-                    "INSERT INTO deadlines (id, child_id, deadline_type, due_date, status, assigned_to) VALUES (?,?,?,?,?,?)",
-                    (_uuid(), child_id, "60-day Reconsideration", _iso_date(due_date), 'pending', cwc_member['id'])
+                    "INSERT INTO deadlines (id, child_id, deadline_type, notes, due_date, status, assigned_to) VALUES (?,?,?,?,?,?,?)",
+                    (_uuid(), child_id, "60_DAY_RECONSIDERATION", "60-day reconsideration period for surrendered child", _iso_date(due_date), 'pending', cwc_member['id'])
                 )
 
             # Generate Hearings & Realistic Orders
             if admission_date < now - timedelta(days=5):
-                hearing_date = admission_date + timedelta(days=random.randint(2, 5))
+                # Weighted mix so the list isn't monotonously "completed".
+                h_status = random.choices(
+                    ['completed', 'in_progress', 'scheduled', 'rescheduled', 'cancelled'],
+                    weights=[60, 12, 18, 6, 4], k=1
+                )[0]
+                has_happened = h_status in ('completed', 'in_progress')
+                hearing_date = (
+                    admission_date + timedelta(days=random.randint(2, 5)) if has_happened or h_status in ('rescheduled', 'cancelled')
+                    else now + timedelta(days=random.randint(1, 14))  # 'scheduled' hearings sit in the future
+                )
+                hearing_time = f"{random.randint(9, 18):02d}:{random.choice(['00', '30'])}"
                 hearing_id = _uuid()
                 lang = random.choice(['hi', 'te', 'ta', 'en'])
-                transcript = transcripts[lang]
-                
+                transcript = transcripts[lang] if has_happened else ""
+                attendees = json.dumps([cwc_chair['id'], cwc_member['id']])
+
                 conn.execute(
-                    "INSERT INTO hearings (id, child_id, hearing_date, status, attendees, transcript_raw, transcript_edited, transcript_language, notes, transcript_finalized, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (hearing_id, child_id, _iso_datetime(hearing_date), 'completed', f"{cwc_chair['full_name']}, {cwc_member['full_name']}", transcript, transcript, lang, "First production", 1, cwc_member['id'], district)
+                    "INSERT INTO hearings (id, child_id, hearing_date, scheduled_time, status, attendees, transcript_raw, transcript_edited, transcript_language, notes, transcript_finalized, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (hearing_id, child_id, _iso_date(hearing_date), hearing_time, h_status, attendees, transcript, transcript, lang, "First production", 1 if has_happened else 0, cwc_member['full_name'], district)
                 )
-                conn.execute(
-                    "INSERT INTO case_history (id, child_id, event_type, event_date, description, performed_by) VALUES (?,?,?,?,?,?)",
-                    (_uuid(), child_id, "Hearing", _iso_datetime(hearing_date), "CWC Hearing Conducted", cwc_member['id'])
-                )
+                if has_happened:
+                    # The hearing console reads transcripts from transcription_jobs, not hearings.transcript_raw,
+                    # so seeded hearings need a matching job row to show up there.
+                    conn.execute(
+                        "INSERT INTO transcription_jobs (job_id, user_id, audio_path, language, status, final_transcript, created_at, completed_at, hearing_id) VALUES (?,?,?,?,?,?,?,?,?)",
+                        (_uuid(), cwc_member['id'], None, lang, 'completed', transcript, _iso_datetime(hearing_date), _iso_datetime(hearing_date), hearing_id)
+                    )
+                    conn.execute(
+                        "INSERT INTO case_history (id, child_id, event_type, event_date, description, performed_by) VALUES (?,?,?,?,?,?)",
+                        (_uuid(), child_id, "Hearing", _iso_datetime(hearing_date), "CWC Hearing Conducted", cwc_member['id'])
+                    )
 
                 # Order Logic based on Scenario
                 order_id = _uuid()
@@ -190,33 +219,38 @@ def generate_mock_data():
                     # Might be draft or pending_approval placement
                     o_type = 'placement'
                     o_body = "Child to be placed in CCI for safe custody during the inquiry period. DCPU to submit SIR."
+                    o_findings = f"The child was produced before the Committee on {hearing_date.strftime('%d/%m/%Y')}. Preliminary inquiry indicates the child is in need of care and protection under Section 31 of the JJ Act. Age determination and medical examination have been ordered. No family members have come forward to date."
                     o_status = random.choice(['draft', 'pending_approval'])
                 elif scenario == 'overdue_inquiry':
                     # Might have an inquiry_extension that is pending_approval or rejected
                     o_type = 'inquiry_extension'
                     o_body = "The inquiry period is extended by 15 days as the police verification report is still pending. DCPU must expedite."
+                    o_findings = "The statutory 30-day inquiry period has lapsed without receipt of the police verification report. DCPU has been directed to expedite the Social Investigation Report (SIR). No adverse information regarding the child's family background has surfaced to date."
                     o_status = random.choice(['pending_approval', 'rejected', 'approved'])
                 elif scenario == 'restored':
                     o_type = random.choice(['restoration', 'foster_care'])
                     if o_type == 'restoration':
                         o_body = "Child ordered to be restored to biological parents. Counselling has been provided. Parents' identity verified."
+                        o_findings = "The Home Study Report submitted by DCPU confirms suitable living conditions for restoration. Biological parents have been counselled on childcare responsibilities and their identity documents (Aadhaar, address proof) have been verified. No safety concerns were noted during the site visit."
                     else:
                         o_body = "Child deemed fit for foster care. DCPU instructed to map to a suitable foster family within the district."
+                        o_findings = "Family tracing efforts over the inquiry period did not yield a suitable biological family placement. The foster family shortlisted by DCPU has cleared the home study and police verification. The Committee finds foster care to be in the best interest of the child."
                     o_status = 'approved'
                 else:
                     o_type = 'placement'
                     o_body = "Initial placement order for care and protection in CCI."
+                    o_findings = "Having examined the child and reviewed the production report, the Committee is satisfied that institutional care at the CCI is necessary pending the outcome of a detailed inquiry."
                     o_status = 'approved'
 
                 approved_by = None
                 approved_at = None
                 if o_status == 'approved':
-                    approved_by = cwc_chair['id']
+                    approved_by = cwc_chair['full_name']
                     approved_at = _iso_datetime(hearing_date + timedelta(hours=random.randint(1, 48)))
-                
+
                 conn.execute(
-                    "INSERT INTO orders (id, order_number, child_id, hearing_id, order_type, order_body, status, approved_by, approved_at, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                    (order_id, order_num, child_id, hearing_id, o_type, o_body, o_status, approved_by, approved_at, cwc_member['id'], district)
+                    "INSERT INTO orders (id, order_number, child_id, hearing_id, order_type, order_body, findings, status, approved_by, approved_at, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (order_id, order_num, child_id, hearing_id, o_type, o_body, o_findings, o_status, approved_by, approved_at, cwc_member['full_name'], district)
                 )
 
             # LFA Specific Orders
@@ -228,9 +262,10 @@ def generate_mock_data():
                 )
                 
                 # Add an LFA order (approved)
+                lfa_findings = f"Inquiry conducted over a 2-month period included newspaper notices, police verification, and family tracing efforts across {district}. No biological family members or claimants responded within the statutory appeal period. The child is therefore declared Legally Free for Adoption under Section 38 of the JJ Act."
                 conn.execute(
-                    "INSERT INTO orders (id, order_number, child_id, order_type, order_body, status, approved_by, approved_at, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (_uuid(), f"LFA/{now.year}/{uuid.uuid4().hex[:6].upper()}", child_id, 'lfa_declaration', "Child declared Legally Free for Adoption after exhaustive inquiry and 2-month appeal period. No claimants found.", 'approved', cwc_chair['id'], _iso_datetime(lfa_date), cwc_member['id'], district)
+                    "INSERT INTO orders (id, order_number, child_id, order_type, order_body, findings, status, approved_by, approved_at, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (_uuid(), f"LFA/{now.year}/{uuid.uuid4().hex[:6].upper()}", child_id, 'lfa_declaration', "Child declared Legally Free for Adoption after exhaustive inquiry and 2-month appeal period. No claimants found.", lfa_findings, 'approved', cwc_chair['full_name'], _iso_datetime(lfa_date), cwc_member['full_name'], district)
                 )
 
             # Family Visits

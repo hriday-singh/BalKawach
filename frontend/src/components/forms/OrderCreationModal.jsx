@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { X, FileText } from 'lucide-react';
 
@@ -56,7 +57,7 @@ export default function OrderCreationModal({ hearing, token, onClose, onOrderCre
     }
   };
 
-  return (
+  const modal = (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       background: 'rgba(0,0,0,0.8)', zIndex: 1000,
@@ -140,4 +141,6 @@ export default function OrderCreationModal({ hearing, token, onClose, onOrderCre
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

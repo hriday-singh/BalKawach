@@ -1125,13 +1125,14 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
         due_date = _parse_due_date(d["due_date"])
         days = (due_date - now).days
         time_metric = f"{abs(days)} Days Overdue" if days < 0 else "Due Today"
+        label = d["notes"] or d["deadline_type"]
         alerts.append({
             "type": "OVERDUE_DEADLINE", "severity": "high", "child_id": d["child_id"],
             "child_code": d["child_code"] or "",
-            "message": f"Overdue: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
+            "message": f"Overdue: {label} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
             "time_metric": time_metric,
             "days_diff": abs(days),
-            "title": f"{d['notes']} For {d['child_name'] or 'Child'}",
+            "title": f"{label} For {d['child_name'] or 'Child'}",
             "subtitle": f"Due on {due_date.strftime('%m/%d/%Y')}"
         })
 
@@ -1147,13 +1148,14 @@ def dashboard_alerts(user: dict = Depends(require_roles(DATA_READ_ROLES))):
         due_date = _parse_due_date(d["due_date"])
         days = (due_date - now).days
         time_metric = f"{days} Days Left" if days > 0 else "Due Today"
+        label = d["notes"] or d["deadline_type"]
         alerts.append({
             "type": "UPCOMING_DEADLINE", "severity": "medium", "child_id": d["child_id"],
             "child_code": d["child_code"] or "",
-            "message": f"Due Soon: {d['notes']} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
+            "message": f"Due Soon: {label} for {d['child_name'] or 'unknown'} (due {d['due_date']})",
             "time_metric": time_metric,
             "days_diff": abs(days),
-            "title": f"{d['notes']} For {d['child_name'] or 'Child'}",
+            "title": f"{label} For {d['child_name'] or 'Child'}",
             "subtitle": f"Due on {due_date.strftime('%m/%d/%Y')}"
         })
 

@@ -338,6 +338,10 @@
   background-color: #F2E3C6; /* richer light gold block */
 }
 
+.alertLow {
+  background-color: var(--green-bg, rgba(75,122,91,0.15));
+}
+
 .alertMain {
   display: flex;
   flex-direction: column;
@@ -391,6 +395,19 @@
 
 .alertMedium .alertAction {
   color: #D3740D;
+}
+
+.alertLow .alertTitle {
+  color: #2E4A36;
+}
+
+.alertLow .alertSubtitle {
+  color: var(--green, #4B7A5B);
+}
+
+.alertLow .alertMetric,
+.alertLow .alertAction {
+  color: var(--green, #4B7A5B);
 }
 
 /* Admin Modules */

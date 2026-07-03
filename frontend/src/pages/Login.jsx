@@ -50,8 +50,8 @@ export default function Login() {
   // Login screen state
   const [activeTab, setActiveTab] = useState('signin');
   const [expandedGroup, setExpandedGroup] = useState('Global / State Overseers');
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('password123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -156,7 +156,9 @@ export default function Login() {
               <input
                 key={index}
                 ref={(el) => (otpRefs.current[index] = el)}
-                type="text"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 className={styles.otpDigit}
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}

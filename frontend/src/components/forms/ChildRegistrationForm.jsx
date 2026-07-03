@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import axios from 'axios';
 import CustomSelect from '../ui/CustomSelect';
@@ -111,7 +112,7 @@ export default function ChildRegistrationForm({ onClose, onChildAdded, token }) 
     }
   };
 
-  return (
+  const modal = (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       background: 'rgba(0,0,0,0.8)', zIndex: 1000,
@@ -266,4 +267,6 @@ export default function ChildRegistrationForm({ onClose, onChildAdded, token }) 
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

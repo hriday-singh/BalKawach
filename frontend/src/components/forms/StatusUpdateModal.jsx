@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import axios from 'axios';
 
@@ -53,11 +54,12 @@ export default function StatusUpdateModal({ child, onClose, onStatusUpdated, tok
     }
   };
 
-  return (
+  const modal = (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       background: 'rgba(0,0,0,0.8)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '1rem'
     }}>
       <div style={{
         background: 'var(--surface)', width: '100%', maxWidth: '400px',
@@ -112,4 +114,6 @@ export default function StatusUpdateModal({ child, onClose, onStatusUpdated, tok
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

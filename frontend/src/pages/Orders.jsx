@@ -160,11 +160,11 @@ export default function Orders() {
   if (error) return <div style={{ padding: '2rem', color: 'var(--red)' }}>Error: {error}</div>;
 
   return (
-    <div className="page active" style={{ width: '100%', padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-        <div>
+    <div className={`page active ${styles.pageContainer}`}>
+      <div className={styles.headerContainer}>
+        <div className={styles.headerLeft}>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 600, margin: 0 }}>CWC Orders</h2>
-          <p style={{ color: 'var(--muted)', marginTop: '0.5rem' }}>Review, draft, and approve legal orders</p>
+          <p>Review, draft, and approve legal orders</p>
         </div>
         {canEdit && (
           <button onClick={openCreateModal} className={styles.createBtn}>

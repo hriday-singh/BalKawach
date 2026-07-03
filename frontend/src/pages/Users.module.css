@@ -1,0 +1,117 @@
+.pageContainer {
+  width: 100%;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.addBtn {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  borderRadius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.desktopTable {
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  overflow-x: auto;
+  display: block;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobileCards {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.userCard {
+  background: var(--surface);
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cardName {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.cardUsername {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.cardRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .desktopTable {
+    display: none;
+  }
+  .mobileCards {
+    display: flex;
+  }
+  .pageContainer {
+    padding: 1rem;
+  }
+  .headerContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .addBtn {
+    width: 100%;
+    text-align: center;
+  }
+}

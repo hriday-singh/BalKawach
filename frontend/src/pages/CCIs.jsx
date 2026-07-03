@@ -4,6 +4,7 @@ import { Home, Users, CheckSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import styles from './CCIs.module.css';
+import CustomDatePicker from '../components/ui/CustomDatePicker';
 
 import { formatRole } from '../utils/formatters';
 
@@ -93,10 +94,13 @@ export default function CCIs() {
     setIsDetailsModalOpen(true);
     setLoadingDetails(true);
     try {
-      const res = await axios.get(`/api/ccis/${cci.id}/details`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      setSelectedCciDetails(res.data);
+      const [detailsRes, inspectionsRes] = await Promise.all([
+        axios.get(`/api/ccis/${cci.id}/details`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        axios.get(`/api/ccis/${cci.id}/inspections`, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+      const data = detailsRes.data;
+      data.inspections = inspectionsRes.data;
+      setSelectedCciDetails(data);
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to fetch CCI details');
     } finally {
@@ -104,7 +108,14 @@ export default function CCIs() {
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem', color: 'var(--muted)' }}>Loading CCIs...</div>;
+  if (loading) {
+    return (
+      <div className={styles.loadingState}>
+        <div className={styles.spinner}></div>
+        <p>Loading CCIs...</p>
+      </div>
+    );
+  }
   if (error) return <div style={{ padding: '2rem', color: 'var(--red)' }}>Error: {error}</div>;
 
   return (
@@ -280,8 +291,9 @@ export default function CCIs() {
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Date of Visit</label>
-                <input type="date" required value={inspectionData.visit_date} onChange={e => setInspectionData({...inspectionData, visit_date: e.target.value})} 
-                  style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} 
+                <CustomDatePicker 
+                  value={inspectionData.visit_date} 
+                  onChange={val => setInspectionData({...inspectionData, visit_date: val})} 
                 />
               </div>
 
@@ -414,6 +426,33 @@ export default function CCIs() {
                   ) : (
                     <div style={{ color: 'var(--muted)', fontSize: '0.9rem', padding: '1rem', background: 'var(--bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}>No children listed.</div>
                   )}
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckSquare size={18} /> Past Inspections</h3>
+                  <div className={styles.timelineContainer}>
+                    {selectedCciDetails.inspections && selectedCciDetails.inspections.length > 0 ? (
+                      <div className={styles.timeline}>
+                        {selectedCciDetails.inspections.map((insp, i) => (
+                          <div key={insp.id} className={styles.timelineItem}>
+                            <div className={styles.timelineIconWrapper}>
+                              <div className={`${styles.timelineIcon} ${styles.iconTeal}`}></div>
+                              {i !== selectedCciDetails.inspections.length - 1 && <div className={styles.timelineLine}></div>}
+                            </div>
+                            <div className={styles.timelineContent}>
+                              <div className={styles.timelineDate}>{new Date(insp.visit_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                              <h4 className={styles.timelineEventType}>Inspection</h4>
+                              {insp.findings && <p className={styles.timelineDesc}><strong>Findings:</strong> {insp.findings}</p>}
+                              {insp.recommendations && <p className={styles.timelineDesc}><strong>Recommendations:</strong> {insp.recommendations}</p>}
+                              <p className={styles.timelineAuthor}>By: {insp.officer_name || 'Unknown Officer'}{insp.officer_district ? `, ${insp.officer_district}` : ''}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={styles.noHistory} style={{ padding: '1rem', background: 'var(--bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}>No past inspections recorded.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (

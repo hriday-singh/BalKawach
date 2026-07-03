@@ -1,0 +1,11 @@
+venv
+node_modules
+cpms.db*
+.git
+.env
+__pycache__
+*.pyc
+.DS_Store
+frontend/dist
+.vscode
+.claude

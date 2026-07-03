@@ -14,7 +14,8 @@ MODEL_PATH = os.environ.get(
     "ai4bharat/indic-conformer-600m-multilingual"
 )
 
-HF_TOKEN = os.environ.get("HF_TOKEN", None)
+# Hardcoded read-only token for the gated model. Users should set their own token in HF_TOKEN env var.
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
 TARGET_SAMPLE_RATE = 16000
 

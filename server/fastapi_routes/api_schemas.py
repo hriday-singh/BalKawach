@@ -211,6 +211,7 @@ class AlertResponse(BaseModel):
     child_code: str
     message: str
     days_left: Optional[int] = None
+    days_diff: Optional[int] = None
     time_metric: Optional[str] = None
     title: Optional[str] = None
     subtitle: Optional[str] = None

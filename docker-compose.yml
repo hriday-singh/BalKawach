@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "9120:9120"
+    volumes:
+      - .:/app
+    environment:
+      - TRANSCRIPTION_SERVER_URL=http://transcription:9121
+      
+  transcription:
+    build:
+      context: .
+      dockerfile: Dockerfile.transcription
+    ports:
+      - "9121:9121"
+    volumes:
+      - .:/app
+      - hf_cache:/root/.cache/huggingface
+      
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "9122:9122"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - API_URL=http://backend:9120
+    depends_on:
+      - backend
+      - transcription
+
+volumes:
+  hf_cache:

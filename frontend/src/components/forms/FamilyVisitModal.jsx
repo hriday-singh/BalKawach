@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export default function FamilyVisitModal({ childId, onClose, onVisitLogged, token }) {
@@ -48,7 +49,7 @@ export default function FamilyVisitModal({ childId, onClose, onVisitLogged, toke
     }
   };
 
-  return (
+  const modal = (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       background: 'rgba(0,0,0,0.8)', zIndex: 1000,
@@ -105,4 +106,6 @@ export default function FamilyVisitModal({ childId, onClose, onVisitLogged, toke
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

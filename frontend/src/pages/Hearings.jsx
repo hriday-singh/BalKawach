@@ -26,6 +26,16 @@ const formatTime = (isoString) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  // Backend sends a plain YYYY-MM-DD; slice off any legacy time component.
+  // Built as local-time components (not `new Date(str)`) to avoid a UTC-parse day shift.
+  const [year, month, day] = dateString.slice(0, 10).split('-').map(Number);
+  const date = new Date(year, (month || 1) - 1, day || 1);
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 export default function Hearings() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -481,7 +491,7 @@ export default function Hearings() {
                 </div>
                 
                 <div className={styles.dateTime}>
-                  <span><Calendar size={14} /> {hearing.hearing_date}</span>
+                  <span><Calendar size={14} /> {formatDate(hearing.hearing_date)}</span>
                   <span><Clock size={14} /> {hearing.scheduled_time || "TBD"}</span>
                 </div>
                 
@@ -609,7 +619,7 @@ export default function Hearings() {
           <div className={styles.consoleTitle}>
             <h3>{selectedHearing?.child_name} ({selectedHearing?.child_code})</h3>
             <span className={styles.consoleSubtitle}>
-              {selectedHearing?.hearing_date} • {selectedHearing?.scheduled_time || "TBD"}
+              {formatDate(selectedHearing?.hearing_date)} • {selectedHearing?.scheduled_time || "TBD"}
             </span>
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

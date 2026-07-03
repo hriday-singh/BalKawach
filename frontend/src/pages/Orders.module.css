@@ -4,6 +4,48 @@
   gap: 1.5rem;
 }
 
+.pageContainer {
+  width: 100%;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+}
+
+.headerLeft p {
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: 1rem;
+  }
+
+  .headerContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+
+  .createBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Default Mobile: Cards */
 .desktopTable {
   display: none;
@@ -36,8 +78,17 @@
 }
 
 .table th, .table td {
-  padding: 1rem 1.5rem;
+  padding: 1rem 0.85rem;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child, .table td:first-child {
+  padding-left: 1.25rem;
+}
+
+.table th:last-child, .table td:last-child {
+  padding-right: 1.25rem;
 }
 
 .table th {
@@ -49,6 +100,11 @@
 
 .table td {
   vertical-align: middle;
+}
+
+.table .actionBtn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
 }
 
 .table tr:last-child td {

@@ -3,7 +3,8 @@ from fastapi import APIRouter, Request, Response, Form, UploadFile, File
 import logging
 
 router = APIRouter()
-TRANSCRIPTION_SERVER_URL = "http://127.0.0.1:9121"
+import os
+TRANSCRIPTION_SERVER_URL = os.environ.get("TRANSCRIPTION_SERVER_URL", "http://127.0.0.1:9121")
 
 @router.get("/api/languages")
 async def proxy_languages():

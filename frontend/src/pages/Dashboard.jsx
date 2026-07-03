@@ -181,16 +181,27 @@ const Dashboard = () => {
       </div>
       
       {(() => {
-        const combinedItems = alerts.map((a, index) => ({
-            id: `alert-${a.child_id || 'sys'}-${a.type}-${index}`,
-            isAlert: true,
-            title: a.type.replace(/_/g, ' '),
-            desc: a.message,
-            child_id: a.child_id,
-            severity: a.severity,
-            sortScore: a.severity === 'high' ? 100 : a.severity === 'medium' ? 50 : 10,
-            original: a
-        })).sort((a, b) => b.sortScore - a.sortScore);
+        // Items with a counting-down due date (deadline) always rank above
+        // eligibility-style alerts that have no date attached (e.g. LFA_ELIGIBLE).
+        const DEADLINE_TYPES = new Set(['OVERDUE_DEADLINE', 'UPCOMING_DEADLINE', 'AGE_OUT']);
+
+        const combinedItems = alerts.map((a, index) => {
+            const hasDeadline = DEADLINE_TYPES.has(a.type);
+            const isOverdue = a.type === 'OVERDUE_DEADLINE';
+            const daysDiff = a.days_diff !== undefined ? a.days_diff : 999;
+            // urgency: red (overdue or <=15 days), amber (16-30 days), green (>30 days).
+            // Non-deadline alerts keep the neutral gold tone.
+            const urgency = !hasDeadline ? 'gold' : (isOverdue || daysDiff <= 15) ? 'red' : daysDiff <= 30 ? 'amber' : 'green';
+            return {
+                id: `alert-${a.child_id || 'sys'}-${a.type}-${index}`,
+                title: a.type.replace(/_/g, ' '),
+                desc: a.message,
+                child_id: a.child_id,
+                urgency,
+                sortRank: hasDeadline ? (isOverdue ? -100000 - daysDiff : daysDiff) : 100000 + daysDiff,
+                original: a
+            };
+        }).sort((a, b) => a.sortRank - b.sortRank);
 
         if (combinedItems.length === 0) {
           return <div style={{ color: '#6B6259', fontSize: '0.9rem', padding: '16px 0' }}>No pending alerts or deadlines. You're all caught up!</div>;
@@ -199,16 +210,18 @@ const Dashboard = () => {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {combinedItems.slice(0, 8).map((item, i) => {
-              const isHigh = item.severity === 'high';
-              const bgClass = isHigh ? styles.alertHigh : styles.alertMedium;
+              const isHigh = item.urgency === 'red';
+              const bgClass = item.urgency === 'red' ? styles.alertHigh : item.urgency === 'green' ? styles.alertLow : styles.alertMedium;
               const titleText = item.original.title || item.title;
               const subtitleText = item.original.subtitle || item.desc;
-              
+
               let actionText = '';
-              if (item.original.type === 'OVERDUE_DEADLINE' || item.original.type === 'AGE_OUT') {
+              if (item.original.type === 'OVERDUE_DEADLINE') {
                   actionText = 'ACTION REQUIRED IMMEDIATELY';
+              } else if (item.original.type === 'AGE_OUT') {
+                  actionText = isHigh ? 'ACTION REQUIRED IMMEDIATELY' : 'NEEDS ATTENTION';
               } else if (item.original.type === 'UPCOMING_DEADLINE') {
-                  actionText = 'ACTION REQUIRED SOON';
+                  actionText = isHigh ? 'ACTION REQUIRED SOON' : 'UPCOMING';
               }
               
               return (
