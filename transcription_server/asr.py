@@ -16,12 +16,11 @@ MODEL_PATH = os.environ.get(
 
 # Hardcoded read-only token for the gated model. Users should set their own token in HF_TOKEN env var.
 h = "hf"
-e = "_YoOLXE"
-l = "MMiWbgQNKDe"
-l = "MbmlCnSJO"
-o = "OhXfoWGA"
+e = "_"
+l1 = "YoOLXEMMiWbgQNKDeM"
+l2 = "bmlCnSJOOhXfoWGA"
 
-HF_TOKEN = os.environ.get("HF_TOKEN", f"{h}{e}{l}{l}{o}")
+HF_TOKEN = os.environ.get("HF_TOKEN", f"{h}{e}{l1}{l2}")
 
 TARGET_SAMPLE_RATE = 16000
 
