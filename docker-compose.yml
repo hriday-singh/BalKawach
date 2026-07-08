@@ -1,17 +1,6 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    ports:
-      - "9120:9120"
-    volumes:
-      - .:/app
-    environment:
-      - TRANSCRIPTION_SERVER_URL=http://transcription:9121
-      
   transcription:
     build:
       context: .
@@ -19,23 +8,58 @@ services:
     ports:
       - "9121:9121"
     volumes:
-      - .:/app
+      - uploads:/app/uploads
+      - db-data:/app/data
       - hf_cache:/root/.cache/huggingface
-      
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_PATH=/app/data/cpms.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9121/api/languages')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "9120:9120"
+    volumes:
+      - uploads:/app/uploads
+      - db-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSCRIPTION_SERVER_URL=http://transcription:9121
+      - DATABASE_PATH=/app/data/cpms.db
+    depends_on:
+      transcription:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9120/api/system/network-info')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "9122:9122"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - API_URL=http://backend:9120
     depends_on:
-      - backend
-      - transcription
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
+  uploads:
+  db-data:
   hf_cache:

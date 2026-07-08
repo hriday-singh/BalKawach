@@ -1,4 +1,7 @@
 @echo off
+:: Change to the directory of this script (fixes issues when running as Administrator)
+cd /d "%~dp0"
+
 echo ===================================================
 echo Starting BalKawach in Docker
 echo ===================================================
@@ -13,6 +16,13 @@ if errorlevel 1 (
 
 echo Building and starting containers (this may take a few minutes the first time)...
 docker-compose up --build -d
+
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Failed to start Docker containers.
+    echo Please make sure Docker Desktop is fully running and try opening this script as Administrator.
+    pause & exit /b 1
+)
 
 echo.
 echo ===================================================

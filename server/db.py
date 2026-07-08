@@ -28,7 +28,7 @@ from werkzeug.security import generate_password_hash
 # Configuration
 # ---------------------------------------------------------------------------
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cpms.db")
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cpms.db"))
 
 
 def _uuid() -> str:

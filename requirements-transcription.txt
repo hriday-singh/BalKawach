@@ -1,0 +1,8 @@
+transformers>=4.40.0
+soundfile>=0.12.1
+librosa>=0.10.0
+onnxruntime
+fastapi
+uvicorn
+python-multipart
+pydantic

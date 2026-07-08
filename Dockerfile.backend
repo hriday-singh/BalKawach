@@ -2,27 +2,24 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies (e.g. for weasyprint or audio processing)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libsndfile1 \
-    ffmpeg \
+# Install system dependencies for weasyprint
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
-    libgdk-pixbuf2.0-0 \
-    libffi-dev \
+    libgdk-pixbuf-2.0-0 \
     shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-
-# We filter out torch, torchaudio, and transformers because those are only needed by transcription
-# The backend only needs the API requirements. 
-# Alternatively, we just install everything to keep it simple.
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy only the needed application code (not the entire repo)
+COPY main.py .
+COPY server/ server/
+
+# Create necessary directories
+RUN mkdir -p uploads uploads/orders uploads/hearings data
 
 EXPOSE 9120
 

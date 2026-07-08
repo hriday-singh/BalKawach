@@ -3,7 +3,7 @@ import os
 import uuid
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cpms.db")
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.dirname(__file__)), "cpms.db"))
 
 def get_connection():
     return sqlite3.connect(DB_PATH)

@@ -45,7 +45,7 @@ import os
 
 @router.get("/api/transcriptions")
 def get_all_transcriptions():
-    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cpms.db")
+    db_path = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cpms.db"))
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -84,7 +84,7 @@ def get_all_transcriptions():
 
 @router.delete("/api/transcriptions/{job_id}")
 def delete_transcription(job_id: str):
-    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cpms.db")
+    db_path = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cpms.db"))
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     
@@ -103,7 +103,7 @@ def delete_transcription(job_id: str):
 
 @router.get("/api/hearings/{hearing_id}/recordings")
 def get_hearing_recordings(hearing_id: str):
-    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cpms.db")
+    db_path = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "cpms.db"))
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()

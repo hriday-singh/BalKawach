@@ -25,7 +25,7 @@ HF_TOKEN = os.environ.get("HF_TOKEN", f"{h}{e}{l}{l}{o}")
 
 TARGET_SAMPLE_RATE = 16000
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cpu"
 
 LANGUAGES = {
     "hi":  "Hindi",
