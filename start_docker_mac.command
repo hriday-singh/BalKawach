@@ -37,7 +37,7 @@ echo "==================================================="
 echo "Containers started successfully!"
 echo ""
 echo "Frontend   : http://localhost:9122"
-echo "Backend API: http://localhost:9120"
+echo "Backend API: http://localhost:9123"
 echo "==================================================="
 echo ""
 

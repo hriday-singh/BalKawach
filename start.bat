@@ -15,7 +15,7 @@ start "BalKawach Frontend" cmd /k "cd frontend && npm run dev"
 
 echo.
 echo Servers are starting up in separate windows!
-echo Backend API will be available at: http://localhost:9120
+echo Backend API will be available at: http://localhost:9123
 echo Transcription API will be available at: http://localhost:9121
 echo Frontend will be available at: http://localhost:9122
 echo.

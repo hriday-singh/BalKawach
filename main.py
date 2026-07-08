@@ -72,7 +72,7 @@ async def startup_event():
 if __name__ == "__main__":
     import uvicorn
     print("=" * 60)
-    print("  Child Protection Case Management Platform (FastAPI) [Port 9120]")
-    print("  URL       : http://localhost:9120")
+    print("  Child Protection Case Management Platform (FastAPI) [Port 9123]")
+    print("  URL       : http://localhost:9123")
     print("=" * 60)
-    uvicorn.run("main:app", host="0.0.0.0", port=9120, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=9123, reload=True)

@@ -21,6 +21,6 @@ COPY server/ server/
 # Create necessary directories
 RUN mkdir -p uploads uploads/orders uploads/hearings data
 
-EXPOSE 9120
+EXPOSE 9123
 
 CMD ["python", "main.py"]

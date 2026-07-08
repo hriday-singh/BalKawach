@@ -29,7 +29,7 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     ports:
-      - "9120:9120"
+      - "9123:9123"
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
@@ -42,7 +42,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9120/api/system/network-info')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9123/api/system/network-info')"]
       interval: 15s
       timeout: 5s
       retries: 3
