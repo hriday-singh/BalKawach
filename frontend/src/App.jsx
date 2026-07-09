@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PageShell from './components/layout/PageShell';
+import InstallPromptOverlay from './components/ui/InstallPromptOverlay';
 import Dashboard from './pages/Dashboard';
 import Children from './pages/Children';
 import Hearings from './pages/Hearings';
@@ -142,6 +143,7 @@ function ScrollToTop() {
 function App() {
   return (
     <AuthProvider>
+      <InstallPromptOverlay />
       <Router>
         <ScrollToTop />
         <AppRoutes />
