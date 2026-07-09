@@ -167,6 +167,15 @@ export default function Hearings() {
       }
     };
     const fetchLanguages = async () => {
+      const cached = sessionStorage.getItem('cachedLanguages');
+      if (cached) {
+        try {
+          setSupportedLanguages(JSON.parse(cached));
+          return;
+        } catch (e) {
+          // ignore parsing error and fetch again
+        }
+      }
       try {
         const response = await axios.get('/api/languages');
         const langArray = Object.entries(response.data).map(([code, name]) => ({ id: code, label: name }));
@@ -175,6 +184,7 @@ export default function Hearings() {
           if (!merged.find(l => l.id === 'mr')) merged.push({ id: 'mr', label: 'Marathi' });
           if (!merged.find(l => l.id === 'kn')) merged.push({ id: 'kn', label: 'Kannada' });
           setSupportedLanguages(merged);
+          sessionStorage.setItem('cachedLanguages', JSON.stringify(merged));
         }
       } catch (err) {
         console.error("Error fetching languages:", err);
@@ -426,15 +436,15 @@ export default function Hearings() {
             return rec;
           }));
         } else {
-          setTimeout(poll, 3000);
+          setTimeout(poll, 5000);
         }
       } catch (err) {
         console.error("Error polling status:", err);
-        setTimeout(poll, 3000);
+        setTimeout(poll, 5000);
       }
     };
     
-    setTimeout(poll, 3000);
+    setTimeout(poll, 5000);
   };
 
   // View A: Hearings List
