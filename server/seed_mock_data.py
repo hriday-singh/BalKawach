@@ -204,9 +204,14 @@ def generate_mock_data(check_empty=False):
                 transcript = transcripts[lang] if has_happened else ""
                 attendees = json.dumps([cwc_chair['id'], cwc_member['id']])
 
+                transcript_finalized = 1 if has_happened else 0
+                finalized_at = _iso_datetime(hearing_date + timedelta(hours=1)) if transcript_finalized else None
+                finalized_by = cwc_member['full_name'] if transcript_finalized else None
+                created_dt = hearing_date - timedelta(days=1)
+                
                 conn.execute(
-                    "INSERT INTO hearings (id, child_id, hearing_date, scheduled_time, status, attendees, transcript_raw, transcript_edited, transcript_language, notes, transcript_finalized, created_by, district) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (hearing_id, child_id, _iso_date(hearing_date), hearing_time, h_status, attendees, transcript, transcript, lang, "First production", 1 if has_happened else 0, cwc_member['full_name'], district)
+                    "INSERT INTO hearings (id, child_id, hearing_date, scheduled_time, status, attendees, transcript_raw, transcript_edited, transcript_language, notes, transcript_finalized, transcript_finalized_at, transcript_finalized_by, created_by, district, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (hearing_id, child_id, _iso_date(hearing_date), hearing_time, h_status, attendees, transcript, transcript, lang, "First production", transcript_finalized, finalized_at, finalized_by, cwc_member['full_name'], district, _iso_datetime(created_dt), _iso_datetime(created_dt))
                 )
                 if has_happened:
                     # The hearing console reads transcripts from transcription_jobs, not hearings.transcript_raw,
