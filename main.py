@@ -67,6 +67,14 @@ import asyncio
 @app.on_event("startup")
 async def startup_event():
     init_db()
+    
+    # Auto-seed mock data if database is empty
+    try:
+        from server.seed_mock_data import generate_mock_data
+        generate_mock_data(check_empty=True)
+    except Exception as e:
+        print(f"Warning: Failed to auto-seed mock data: {e}")
+        
     asyncio.create_task(cron_worker())
 
 if __name__ == "__main__":
