@@ -119,6 +119,10 @@ export default function Login() {
   const handleOtpKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       otpRefs.current[index - 1]?.focus();
+    } else if (e.key === 'Enter') {
+      if (!isVerifying && !otp.some(d => d === '')) {
+        handleVerify();
+      }
     }
   };
 
@@ -163,6 +167,7 @@ export default function Login() {
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                autoFocus={index === 0}
                 placeholder={index + 1}
                 maxLength={1}
               />
