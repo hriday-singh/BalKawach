@@ -37,6 +37,7 @@ def generate_mock_data(check_empty=False):
         except Exception:
             pass
             
+    _create_tables(conn)
     seed_data(conn)
     clear_transactional_data(conn)
 
