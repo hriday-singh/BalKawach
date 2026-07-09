@@ -11,6 +11,12 @@ export default function MobileQR() {
   useEffect(() => {
     const fetchIp = async () => {
       try {
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          setQrUrl(`${window.location.origin}/?install=true`);
+          setLoading(false);
+          return;
+        }
+
         const res = await axios.get('/api/system/network-info');
         const ip = res.data.lan_ip;
         // Construct the URL using the frontend port (9122)
