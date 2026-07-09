@@ -39,7 +39,7 @@ export function TopNav() {
       <div className={styles.leftArea}>
         <div className={styles.brand}>
           <div className={styles.brandIcon}>
-            <Shield size={18} />
+            <img src="/logo.png" alt="BalKawach Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <span style={{ fontFamily: '"Bricolage Grotesque", sans-serif', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '-0.01em', color: 'var(--text, #2B2622)' }}>BalKawach</span>
         </div>

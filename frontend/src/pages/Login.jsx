@@ -205,7 +205,9 @@ export default function Login() {
     <div className={styles.container}>
       <div className={`${styles.card} ${styles.screenEnter}`}>
         <div className={styles.brand}>
-          <div className={styles.shield}><Shield size={32} /></div>
+          <div className={styles.logoContainer}>
+            <img src="/logo.png" alt="BalKawach Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <h1>BalKawach</h1>
           <p>Child Protection Management System</p>
         </div>

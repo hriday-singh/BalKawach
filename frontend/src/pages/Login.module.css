@@ -26,12 +26,9 @@
   margin-bottom: 28px;
 }
 
-.shield {
+.logoContainer {
   width: 64px;
   height: 64px;
-  background: var(--accent-bg, rgba(228, 114, 12, 0.1));
-  color: var(--accent, #E4720C);
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
