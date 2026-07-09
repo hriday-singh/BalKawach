@@ -2,20 +2,35 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies for audio processing
+# System dependencies for audio processing
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# --- torch + torchaudio: EXACT matching pair, pinned explicitly ---
+# torchaudio ships a compiled C++ extension linked against one specific
+# torch build. Installing "torch torchaudio" unpinned lets pip resolve
+# each to its own "latest", which is not guaranteed to be a matched pair
+# on the CPU wheel index - that's what caused the
+# "undefined symbol: aoti_torch_abi_version" crash. Pinning identical
+# version numbers for both, from the same index, avoids this entirely.
+# This runs in its own layer, before requirements-transcription.txt, so
+# nothing installed afterward can accidentally swap one of the two out.
+RUN pip install --no-cache-dir \
+    torch==2.5.1 \
+    torchaudio==2.5.1 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Fail the build here if the pair is somehow still broken - not three
+# layers and a deploy later.
+RUN python -c "import torch, torchaudio; print('torch', torch.__version__); print('torchaudio', torchaudio.__version__)"
+
 COPY requirements-transcription.txt .
 RUN pip install --no-cache-dir -r requirements-transcription.txt
 
-# Install matching CPU torch/torchaudio LAST so nothing downstream can override them
-RUN pip install --no-cache-dir --force-reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cpu
-
-# Sanity check at build time - fails the build loudly instead of at runtime
-RUN python -c "import torch, torchaudio; print(torch.__version__, torchaudio.__version__)" && pip check
+# Whole-environment consistency check
+RUN pip check
 
 # Copy only the transcription server code (not the entire repo)
 COPY transcription_server/ transcription_server/
@@ -26,4 +41,4 @@ RUN mkdir -p uploads data
 EXPOSE 9121
 
 # Download model then start server
-CMD python -m transcription_server.download_model && python -m transcription_server.main
+CMD ["sh", "-c", "python -m transcription_server.download_model && python -m transcription_server.main"]
