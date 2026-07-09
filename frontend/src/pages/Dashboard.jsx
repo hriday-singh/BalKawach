@@ -40,6 +40,8 @@ const Dashboard = () => {
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
       }
+    } else {
+      alert("To install the app, click the install icon in your browser's address bar or select 'Add to Home Screen' from your browser menu.");
     }
   };
 
@@ -146,14 +148,12 @@ const Dashboard = () => {
                 : 'For the best experience, install our app.'}
             </p>
           </div>
-          {deferredPrompt && (
-            <button onClick={handleInstallClick} style={{
-              background: 'var(--accent)', color: 'white', border: 'none', padding: '8px 16px',
-              borderRadius: '6px', fontWeight: 600, cursor: 'pointer'
-            }}>
-              {window.innerWidth > 768 ? 'Download' : 'Install App'}
-            </button>
-          )}
+          <button onClick={handleInstallClick} style={{
+            background: 'var(--accent)', color: 'white', border: 'none', padding: '8px 16px',
+            borderRadius: '6px', fontWeight: 600, cursor: 'pointer'
+          }}>
+            {window.innerWidth > 768 ? 'Download' : 'Install App'}
+          </button>
         </div>
       )}
 
