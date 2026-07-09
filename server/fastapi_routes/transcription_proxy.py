@@ -128,7 +128,7 @@ def get_hearing_recordings(hearing_id: str):
                 "full_name": r["full_name"] or r["username"] or r["user_id"],
                 "role": r["role"]
             },
-            "timestamp": r["created_at"] + "Z" if r["created_at"] else None,
+            "timestamp": r["created_at"] if r["created_at"] and r["created_at"].endswith("Z") else (r["created_at"] + "Z" if r["created_at"] else None),
             "language": r["language"],
             "status": r["status"],
             "transcript": r["final_transcript"] or '',
