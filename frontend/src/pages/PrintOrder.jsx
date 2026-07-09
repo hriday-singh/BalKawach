@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Printer } from 'lucide-react';
 
 export default function PrintOrder() {
   const { id } = useParams();
@@ -27,17 +27,13 @@ export default function PrintOrder() {
 
   const hasPrinted = React.useRef(false);
   useEffect(() => {
-    const handleAfterPrint = () => window.close();
-    window.addEventListener('afterprint', handleAfterPrint);
-
     if (!loading && order && !hasPrinted.current) {
       hasPrinted.current = true;
+      // Only auto-print on non-mobile devices if we can detect it, but it's safer to just rely on the button or simple timeout without closing.
       setTimeout(() => {
         window.print();
-      }, 500);
+      }, 800);
     }
-
-    return () => window.removeEventListener('afterprint', handleAfterPrint);
   }, [loading, order]);
 
   if (loading) return (
@@ -50,17 +46,28 @@ export default function PrintOrder() {
   if (error || !order) return <div style={{ padding: '2rem', color: 'red' }}>{error || 'Order not found'}</div>;
 
   return (
-    <div className="print-order" style={{ 
-      background: 'white', 
-      color: 'black', 
-      minHeight: '100vh',
-      padding: '2rem',
-      fontFamily: '"Times New Roman", Times, serif'
-    }}>
-      <div className="print-header">
-        <h1>Child Welfare Committee</h1>
-        <h2>District {order.district || '___________'}, Government of {order.state || 'India'}</h2>
+    <>
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+        }
+      `}</style>
+      <div className="no-print" style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 1000 }}>
+        <button onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '1rem 2rem', background: '#E4720C', color: 'white', border: 'none', borderRadius: '50px', boxShadow: '0 4px 12px rgba(228,114,12,0.3)', fontWeight: 'bold', cursor: 'pointer' }}>
+          <Printer size={18} /> Print Document
+        </button>
       </div>
+      <div className="print-order" style={{ 
+        background: 'white', 
+        color: 'black', 
+        minHeight: '100vh',
+        padding: '2rem',
+        fontFamily: '"Times New Roman", Times, serif'
+      }}>
+        <div className="print-header">
+          <h1>Child Welfare Committee</h1>
+          <h2>District {order.district || '___________'}, Government of {order.state || 'India'}</h2>
+        </div>
 
       <table className="print-meta" style={{ width: '100%', marginBottom: '24px' }}>
         <tbody>
@@ -110,5 +117,6 @@ export default function PrintOrder() {
 
 
     </div>
+    </>
   );
 }

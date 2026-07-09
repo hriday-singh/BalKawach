@@ -12,6 +12,36 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+      setIsStandalone(true);
+    }
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,6 +129,34 @@ const Dashboard = () => {
         </div>
       </header>
       
+      {/* PWA Install Banner */}
+      {!isStandalone && (
+        <div style={{
+          background: 'var(--surface)', border: `1px solid var(--${deferredPrompt ? 'accent' : 'border'})`, borderRadius: '12px',
+          padding: '16px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '12px'
+        }}>
+          <div>
+            <h4 style={{ margin: '0 0 4px 0' }}>
+              {window.innerWidth > 768 ? 'Mobile Experience' : 'Install BalKawach'}
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
+              {window.innerWidth > 768 
+                ? 'Have a better experience with our mobile app.'
+                : 'For the best experience, install our app.'}
+            </p>
+          </div>
+          {deferredPrompt && (
+            <button onClick={handleInstallClick} style={{
+              background: 'var(--accent)', color: 'white', border: 'none', padding: '8px 16px',
+              borderRadius: '6px', fontWeight: 600, cursor: 'pointer'
+            }}>
+              {window.innerWidth > 768 ? 'Download' : 'Install App'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Hero Card */}
       <div className={styles.heroCard} onClick={() => navigate('/children')} style={{ cursor: 'pointer' }}>
         <div className={styles.heroGlow}></div>

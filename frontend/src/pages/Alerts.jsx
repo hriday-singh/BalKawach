@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AlertCircle, AlertTriangle, Info, FileText, ChevronRight } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, FileText, ChevronRight, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Alerts.module.css';
 
@@ -79,7 +79,13 @@ const Alerts = () => {
         {error && <div className={styles.error}>{error}</div>}
         
         {!loading && !error && alerts.length === 0 && (
-          <div className={styles.empty}>No active alerts at this time.</div>
+          <div style={{ width: '100%', textAlign: 'center', padding: '4rem 2rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '2rem' }}>
+            <Bell size={32} style={{ color: 'var(--muted)', marginBottom: '1rem' }} />
+            <h3 style={{ margin: '0 0 0.5rem 0' }}>No active alerts</h3>
+            <p style={{ color: 'var(--muted)' }}>
+              There are currently no system alerts or notifications at this time.
+            </p>
+          </div>
         )}
         
         {!loading && !error && alerts.length > 0 && (

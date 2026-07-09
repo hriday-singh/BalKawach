@@ -81,11 +81,6 @@ const CustomAudioPlayer = ({ audioUrl, amplitudeHistory = [], explicitDuration =
   
   // Fetch and decode audio to get exact duration and generate waveform
   useEffect(() => {
-    if (amplitudeHistory && amplitudeHistory.length > 0) {
-      setRealWaveform(amplitudeHistory);
-      return;
-    }
-    
     if (!audioUrl) return;
     let isSubscribed = true;
     
@@ -125,6 +120,10 @@ const CustomAudioPlayer = ({ audioUrl, amplitudeHistory = [], explicitDuration =
         setRealWaveform(normalized);
       } catch (err) {
         console.error("Error decoding audio for waveform:", err);
+        // Fallback to amplitudeHistory if fetch/decode fails (e.g. some CORS issue)
+        if (amplitudeHistory && amplitudeHistory.length > 0) {
+          setRealWaveform(amplitudeHistory);
+        }
       }
     };
     
@@ -238,13 +237,44 @@ const CustomAudioPlayer = ({ audioUrl, amplitudeHistory = [], explicitDuration =
         {isPlaying ? <Pause size={14} /> : <Play size={14} style={{marginLeft: '2px'}} />}
       </button>
       
-      <div className={styles.waveformContainer}>
+      <div className={styles.waveformContainer} style={{ position: 'relative' }}>
         <canvas 
           ref={canvasRef} 
           width={120} 
           height={32} 
           className={styles.canvas}
-          onClick={handleCanvasClick}
+          style={{ pointerEvents: 'none' }}
+        />
+        <input 
+          type="range" 
+          min="0" 
+          max="1" 
+          step="0.01"
+          value={progress || 0}
+          onChange={(e) => {
+            const newProgress = parseFloat(e.target.value);
+            const activeDuration = (audioRef.current?.duration && audioRef.current?.duration !== Infinity && !isNaN(audioRef.current?.duration)) 
+              ? audioRef.current.duration 
+              : (durationRef.current || explicitDuration);
+            
+            if (audioRef.current && activeDuration) {
+              try {
+                audioRef.current.currentTime = newProgress * activeDuration;
+              } catch (err) {}
+            }
+            setProgress(newProgress);
+            setCurrentTime(newProgress * activeDuration);
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
+            cursor: 'pointer',
+            margin: 0
+          }}
         />
       </div>
       

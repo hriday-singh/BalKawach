@@ -306,15 +306,26 @@
     padding: 12px;
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
   
-  .doneActions {
-    justify-content: space-between;
+  .fileInfo {
+    align-items: flex-start;
+    flex: none; /* Reset flex basis which is 200px (acts as height in column) */
+  }
+  
+  .fileDetails {
     width: 100%;
   }
   
+  .doneActions {
+    justify-content: flex-end;
+    width: 100%;
+    gap: 12px;
+  }
+  
   .sendButton {
-    flex-grow: 1;
-    justify-content: center;
+    /* Prevents the send button from stretching awkwardly on mobile, keeps it standard size */
+    flex-grow: 0;
   }
 }

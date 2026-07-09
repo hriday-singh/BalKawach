@@ -182,7 +182,7 @@ export default function Login() {
             >
               {isVerifying ? 'Verifying...' : 'Verify & Continue'}
             </button>
-            <p className={styles.otpDemoNote}>Demo mode — any 6-digit code works</p>
+            <p className={styles.otpDemoNote}>Demo mode: any 6-digit code works</p>
             
             <button className={styles.resendLink} onClick={handleResend}>
               Resend OTP

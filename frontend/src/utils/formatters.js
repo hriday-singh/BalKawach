@@ -6,3 +6,8 @@ export const formatRole = (role) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   }).join(' ');
 };
+
+export const formatString = (str) => {
+  if (!str) return 'N/A';
+  return str.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+};

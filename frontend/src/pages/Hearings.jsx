@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Calendar, Clock, ChevronRight, FileAudio, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, ChevronRight, FileAudio, Loader2, Mic } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import OrderCreationModal from '../components/forms/OrderCreationModal';
 import AudioRecorder from '../components/recorder/AudioRecorder';
@@ -632,7 +632,7 @@ export default function Hearings() {
               {formatDate(selectedHearing?.hearing_date)} • {selectedHearing?.scheduled_time || "TBD"}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className={styles.headerActions}>
             <span className={`${styles.statusBadge} ${styles[selectedHearing?.status]}`}>
               {formatStatus(selectedHearing?.status)}
             </span>
@@ -655,7 +655,16 @@ export default function Hearings() {
 
         {/* Chat Thread */}
         <div className={styles.chatThread}>
-          {recordings.map((rec) => {
+          {recordings.length === 0 ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', textAlign: 'center', padding: '2rem' }}>
+              <div style={{ background: 'var(--border)', borderRadius: '50%', padding: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Mic size={48} style={{ color: 'var(--muted)' }} />
+              </div>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text)', fontSize: '1.1rem' }}>No recordings yet</h3>
+              <p style={{ margin: 0, maxWidth: '300px', fontSize: '0.9rem' }}>Start recording audio or typing below to begin the hearing transcript.</p>
+            </div>
+          ) : (
+          recordings.map((rec) => {
             const isCurrentUser = user && (rec.user.id === user.id || rec.user.full_name === user.full_name);
             
             return (
@@ -701,7 +710,7 @@ export default function Hearings() {
                 </div>
               </div>
             );
-          })}
+          }))}
           <div ref={threadEndRef} />
         </div>
 

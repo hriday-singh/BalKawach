@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { X, FileText } from 'lucide-react';
+import CustomSelect from '../ui/CustomSelect';
 
 export default function OrderCreationModal({ hearing, token, onClose, onOrderCreated }) {
   const [formData, setFormData] = useState({
@@ -15,6 +16,16 @@ export default function OrderCreationModal({ hearing, token, onClose, onOrderCre
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const orderTypeOptions = [
+    { label: 'Placement Order', value: 'placement' },
+    { label: 'Inquiry Extension', value: 'inquiry_extension' },
+    { label: 'Restoration Order', value: 'restoration' },
+    { label: 'LFA Declaration', value: 'lfa_declaration' },
+    { label: 'Foster Care Order', value: 'foster_care' },
+    { label: 'Repatriation Order', value: 'repatriation' },
+    { label: 'Other', value: 'other' }
+  ];
 
   const getOrderTemplate = (type) => {
     const today = new Date().toLocaleDateString();
@@ -83,49 +94,31 @@ export default function OrderCreationModal({ hearing, token, onClose, onOrderCre
           
           <form id="order-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Child ID</label>
-                <input required name="child_id" value={formData.child_id} onChange={handleChange} 
-                  style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} 
-                  readOnly={!!hearing?.child_id}
-                />
-              </div>
-              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Hearing ID</label>
-                <input name="hearing_id" value={formData.hearing_id} onChange={handleChange} 
-                  style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} 
-                  readOnly={!!hearing?.id}
-                />
-              </div>
-            </div>
+            {/* Hidden Inputs for IDs */}
+            <input type="hidden" name="child_id" value={formData.child_id} />
+            <input type="hidden" name="hearing_id" value={formData.hearing_id} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Order Type</label>
-              <select name="order_type" value={formData.order_type} onChange={handleChange} 
-                style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
-              >
-                <option value="placement">Placement Order</option>
-                <option value="inquiry_extension">Inquiry Extension</option>
-                <option value="restoration">Restoration Order</option>
-                <option value="lfa_declaration">LFA Declaration</option>
-                <option value="foster_care">Foster Care Order</option>
-                <option value="repatriation">Repatriation Order</option>
-                <option value="other">Other</option>
-              </select>
+              <CustomSelect 
+                name="order_type" 
+                value={formData.order_type} 
+                onChange={handleChange} 
+                options={orderTypeOptions}
+              />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Findings (Summary of facts)</label>
               <textarea name="findings" value={formData.findings} onChange={handleChange} rows={3} required
-                style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} 
+                style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'inherit', resize: 'vertical' }} 
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Order Body (Directives)</label>
               <textarea name="order_body" value={formData.order_body} onChange={handleChange} rows={5} required
-                style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} 
+                style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'inherit', resize: 'vertical' }} 
               />
             </div>
 

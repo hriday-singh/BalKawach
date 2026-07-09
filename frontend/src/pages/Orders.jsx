@@ -413,9 +413,11 @@ export default function Orders() {
                     disabled
                     className={styles.formInput}
                     value={
-                      childrenList.find(c => c.id === formData.child_id)
-                        ? `${childrenList.find(c => c.id === formData.child_id).name}${childrenList.find(c => c.id === formData.child_id).case_number ? ` (${childrenList.find(c => c.id === formData.child_id).case_number})` : ''}`
-                        : formData.child_id
+                      selectedOrder?.child?.name 
+                        ? `${selectedOrder.child.name}${selectedOrder.child.case_number ? ` (${selectedOrder.child.case_number})` : ''}`
+                        : (childrenList.find(c => c.id === formData.child_id)
+                          ? `${childrenList.find(c => c.id === formData.child_id).name}${childrenList.find(c => c.id === formData.child_id).case_number ? ` (${childrenList.find(c => c.id === formData.child_id).case_number})` : ''}`
+                          : formData.child_id)
                     }
                   />
                 ) : (

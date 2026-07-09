@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import styles from './Users.module.css';
 
 import { formatRole } from '../utils/formatters';
+import { Users as UsersIcon } from 'lucide-react';
 
 export default function Users() {
   const { token, user } = useAuth();
@@ -98,8 +99,18 @@ export default function Users() {
           Add User
         </button>
       </div>
-
-      {/* Desktop Table View */}
+      
+      {users.length === 0 ? (
+        <div style={{ width: '100%', textAlign: 'center', padding: '4rem 2rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '2rem' }}>
+          <UsersIcon size={32} style={{ color: 'var(--muted)', marginBottom: '1rem' }} />
+          <h3 style={{ margin: '0 0 0.5rem 0' }}>No users found</h3>
+          <p style={{ color: 'var(--muted)' }}>
+            There are currently no users registered in the system.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
       <div className={styles.desktopTable}>
         <table className={styles.table}>
           <thead>
@@ -172,6 +183,8 @@ export default function Users() {
           </div>
         ))}
       </div>
+      </>
+      )}
 
       {isModalOpen && (
         <div style={{

@@ -280,11 +280,12 @@ export default function CCIs() {
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.8)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
         }}>
           <div style={{
             background: 'var(--surface)', width: '100%', maxWidth: '500px',
-            borderRadius: '12px', border: '1px solid var(--border)', padding: '2rem'
+            borderRadius: '12px', border: '1px solid var(--border)', padding: '1.5rem',
+            maxHeight: '90vh', overflowY: 'auto'
           }}>
             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Log Inspection for {selectedCci.name}</h2>
             <form onSubmit={handleInspectionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -328,12 +329,12 @@ export default function CCIs() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.8)', zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '1rem'
+          padding: '16px'
         }}>
           <div style={{
             background: 'var(--surface)', width: '100%', maxWidth: '800px',
             maxHeight: '90vh', overflowY: 'auto',
-            borderRadius: '12px', border: '1px solid var(--border)', padding: '2rem'
+            borderRadius: '12px', border: '1px solid var(--border)', padding: '1.5rem'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.4rem' }}>{selectedCci.name} Details</h2>
@@ -475,11 +476,12 @@ export default function CCIs() {
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.8)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
         }}>
           <div style={{
             background: 'var(--surface)', width: '100%', maxWidth: '500px',
-            borderRadius: '12px', border: '1px solid var(--border)', padding: '2rem'
+            borderRadius: '12px', border: '1px solid var(--border)', padding: '1.5rem',
+            maxHeight: '90vh', overflowY: 'auto'
           }}>
             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Register New CCI</h2>
             <form onSubmit={handleAddCciSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

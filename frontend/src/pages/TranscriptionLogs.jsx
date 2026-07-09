@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import CustomAudioPlayer from '../components/recorder/CustomAudioPlayer';
-import { Loader2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Trash2, ChevronDown, ChevronUp, FileAudio } from 'lucide-react';
 import { formatRole } from '../utils/formatters';
 
 const TranscriptCell = ({ transcript }) => {
@@ -210,8 +210,11 @@ export default function TranscriptionLogs() {
               })}
               {logs.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: '#A79D8F' }}>
-                    No transcription logs found.
+                  <td colSpan={5} style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--muted)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                      <FileAudio size={32} style={{ color: 'var(--muted)', opacity: 0.5 }} />
+                      <span style={{ fontSize: '0.95rem', fontWeight: '500' }}>No transcription logs found</span>
+                    </div>
                   </td>
                 </tr>
               )}

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Calendar, LineChart, Users, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { formatString } from '../utils/formatters';
 import StatusUpdateModal from '../components/forms/StatusUpdateModal';
 import FamilyVisitModal from '../components/forms/FamilyVisitModal';
 import styles from './ChildProfile.module.css';
@@ -123,7 +124,7 @@ const ChildProfile = ({ id }) => {
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>CATEGORY</span>
-            <span className={styles.infoValue}>{child.admission_category || 'N/A'}</span>
+            <span className={styles.infoValue}>{formatString(child.admission_category)}</span>
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>ADMITTED</span>
