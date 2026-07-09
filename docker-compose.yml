@@ -33,6 +33,7 @@ services:
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
+    command: bash -c "python -c 'from server.seed_mock_data import generate_mock_data; generate_mock_data(check_empty=True)' && python main.py"
     environment:
       - PYTHONUNBUFFERED=1
       - TRANSCRIPTION_SERVER_URL=http://transcription:9121

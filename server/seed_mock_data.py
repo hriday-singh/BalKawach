@@ -27,8 +27,16 @@ def clear_transactional_data(conn: sqlite3.Connection):
     conn.execute("PRAGMA foreign_keys = ON")
     print("Transactional data cleared and tables recreated.")
 
-def generate_mock_data():
+def generate_mock_data(check_empty=False):
     conn = get_db()
+    if check_empty:
+        try:
+            if conn.execute("SELECT count(*) FROM children").fetchone()[0] > 0:
+                print("Mock data already exists. Skipping auto-seed.")
+                return
+        except Exception:
+            pass
+            
     seed_data(conn)
     clear_transactional_data(conn)
 
