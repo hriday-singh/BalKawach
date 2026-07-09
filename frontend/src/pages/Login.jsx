@@ -61,6 +61,41 @@ export default function Login() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const otpRefs = useRef([]);
+  
+  // Install states
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+      setIsStandalone(true);
+    }
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('install') === 'true' && !isStandalone) {
+      setActiveTab('install');
+    }
+  }, [isStandalone]);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("To install the app, tap 'Add to Home Screen' in your browser menu (usually three dots in the top right or the share button at the bottom).");
+    }
+  };
 
   // Form submission
   const handleSubmit = async (e) => {
@@ -212,7 +247,7 @@ export default function Login() {
           <p>Child Protection Management System</p>
         </div>
 
-        <div className={styles.tabs}>
+        <div className={styles.tabs} style={{ display: activeTab === 'install' ? 'none' : 'flex' }}>
           <button 
             className={`${styles.tab} ${activeTab === 'signin' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('signin')}
@@ -310,6 +345,29 @@ export default function Login() {
               </div>
             ))}
             <p className={styles.quickAccessHint}>Click a profile to login automatically</p>
+          </div>
+        ) : activeTab === 'install' ? (
+          <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+            <div style={{ marginBottom: '1.5rem', background: 'var(--bg)', padding: '1.5rem', borderRadius: '12px' }}>
+              <QrCode size={48} color="var(--accent)" style={{ marginBottom: '1rem' }} />
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text)' }}>Install BalKawach</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                Add this app to your home screen for the best mobile experience, offline capabilities, and quick access.
+              </p>
+            </div>
+            
+            <button onClick={handleInstallClick} style={{
+              background: 'var(--accent)', color: 'white', border: 'none', padding: '12px 24px',
+              borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', width: '100%', marginBottom: '1rem'
+            }}>
+              Install App Now
+            </button>
+            <button onClick={() => setActiveTab('signin')} style={{
+              background: 'transparent', color: 'var(--text-secondary)', border: 'none',
+              fontWeight: 500, cursor: 'pointer', fontSize: '0.9rem'
+            }}>
+              Continue to Login
+            </button>
           </div>
         ) : (
           <MobileQR />

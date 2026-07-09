@@ -14,7 +14,7 @@ export default function MobileQR() {
         const res = await axios.get('/api/system/network-info');
         const ip = res.data.lan_ip;
         // Construct the URL using the frontend port (9122)
-        const url = `http://${ip}:9122/`;
+        const url = `http://${ip}:9122/?install=true`;
         setQrUrl(url);
       } catch (err) {
         console.error("Failed to fetch network info", err);
