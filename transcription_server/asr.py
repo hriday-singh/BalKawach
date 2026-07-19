@@ -127,7 +127,8 @@ def transcribe_audio(audio_path: str, language: str = "hi", decoder: str = "both
             
         audio_inputs = PROCESSOR(audio, sampling_rate=TARGET_SAMPLE_RATE, return_tensors="pt").to(DEVICE)
         
-        tgt_lang = SEAMLESS_LANG_CODES.get(language, "hin")
+        # User requested the output to ALWAYS be English
+        tgt_lang = "eng"
         
         with torch.inference_mode():
             if DEVICE == "cuda":
