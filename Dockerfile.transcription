@@ -35,6 +35,10 @@ RUN pip check
 # Copy only the transcription server code (not the entire repo)
 COPY transcription_server/ transcription_server/
 
+# Validate that the HuggingFace token has access to the gated repo
+# If this fails during build, the IP or token is blocked!
+RUN python transcription_server/check_token.py
+
 # Create uploads directory
 RUN mkdir -p uploads data
 

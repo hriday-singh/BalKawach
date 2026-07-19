@@ -14,6 +14,9 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
 if not HF_TOKEN:
     HF_TOKEN = f"{h}{e}{l1}{l2}"
 
+_masked_token = HF_TOKEN[:4] + "*" * 10 + HF_TOKEN[-4:] if len(HF_TOKEN) > 8 else "INVALID"
+print(f"Using HuggingFace Token: {_masked_token}")
+
 def preload_model():
     print(f"Pre-downloading model: {MODEL_PATH}...")
     try:
@@ -23,6 +26,7 @@ def preload_model():
         print("Model downloaded and cached successfully!")
     except Exception as e:
         print(f"Error downloading model: {e}")
+        raise e
 
 if __name__ == "__main__":
     preload_model()

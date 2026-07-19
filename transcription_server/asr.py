@@ -23,6 +23,9 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
 if not HF_TOKEN:
     HF_TOKEN = f"{h}{e}{l1}{l2}"
 
+_masked_token = HF_TOKEN[:4] + "*" * 10 + HF_TOKEN[-4:] if len(HF_TOKEN) > 8 else "INVALID"
+print(f"Using HuggingFace Token: {_masked_token}")
+
 TARGET_SAMPLE_RATE = 16000
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
