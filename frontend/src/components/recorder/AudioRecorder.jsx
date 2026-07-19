@@ -3,6 +3,41 @@ import { Mic, Trash2, Send, X, Check, Paperclip, Keyboard } from 'lucide-react';
 import CustomAudioPlayer from './CustomAudioPlayer';
 import styles from './AudioRecorder.module.css';
 
+const encodeWAV = (samples, sampleRate) => {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  
+  const writeString = (view, offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+  
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(view, 8, 'WAVE');
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // 1 channel
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true); // 16-bit
+  writeString(view, 36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+  
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++) {
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    view.setInt16(offset, s, true);
+    offset += 2;
+  }
+  
+  return new Blob([view], { type: 'audio/wav' });
+};
+
 const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwitchToText }) => {
   const [state, setState] = useState('idle'); // 'idle' | 'recording' | 'done'
 
@@ -13,8 +48,9 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwi
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState(null);
   
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const pcmChunksRef = useRef([]);
+  const processorRef = useRef(null);
+  const recordingStateRef = useRef(false);
   const timerRef = useRef(null);
   
   const audioContextRef = useRef(null);
@@ -33,25 +69,9 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwi
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
-      };
-      
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        setAudioBlob(blob);
-        updateState('done');
-        cleanupStream();
-      };
-      
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const audioCtx = new AudioContext();
+      // Force 16kHz for exact match with backend requirements
+      const audioCtx = new AudioContext({ sampleRate: 16000 });
       audioContextRef.current = audioCtx;
       
       const analyser = audioCtx.createAnalyser();
@@ -62,9 +82,23 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwi
       source.connect(analyser);
       sourceRef.current = source;
       
+      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+      pcmChunksRef.current = [];
+      recordingStateRef.current = true;
+      
+      processor.onaudioprocess = (e) => {
+        if (!recordingStateRef.current) return;
+        const inputData = e.inputBuffer.getChannelData(0);
+        pcmChunksRef.current.push(new Float32Array(inputData));
+      };
+      
+      // Connect processor
+      source.connect(processor);
+      processor.connect(audioCtx.destination);
+      
       amplitudeHistoryRef.current = [];
       
-      mediaRecorder.start(100);
       updateState('recording');
       setRecordingTime(0);
       
@@ -162,12 +196,29 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwi
   };
   
   const stopRecording = (cancel = false) => {
-    if (mediaRecorderRef.current && state === 'recording') {
+    if (state === 'recording') {
+      recordingStateRef.current = false;
+      
       if (cancel) {
-        mediaRecorderRef.current.onstop = cleanupAll;
-        updateState('idle');
+        cleanupAll();
+      } else {
+        // Encode accumulated PCM chunks to WAV
+        const chunks = pcmChunksRef.current;
+        const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+        const combined = new Float32Array(totalLength);
+        let offset = 0;
+        for (let i = 0; i < chunks.length; i++) {
+          combined.set(chunks[i], offset);
+          offset += chunks[i].length;
+        }
+        
+        const sampleRate = audioContextRef.current ? audioContextRef.current.sampleRate : 16000;
+        const wavBlob = encodeWAV(combined, sampleRate);
+        setAudioBlob(wavBlob);
+        
+        updateState('done');
+        cleanupStream();
       }
-      mediaRecorderRef.current.stop();
     }
   };
 
@@ -175,7 +226,12 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwi
     if (timerRef.current) clearInterval(timerRef.current);
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     
-    if (sourceRef.current) sourceRef.current.disconnect();
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+    }
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
+    }
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       audioContextRef.current.close();
     }
@@ -187,8 +243,9 @@ const AudioRecorder = ({ onRecordingComplete, onUploadFile, onStateChange, onSwi
     audioContextRef.current = null;
     analyserRef.current = null;
     sourceRef.current = null;
-    mediaRecorderRef.current = null;
+    processorRef.current = null;
     streamRef.current = null;
+    recordingStateRef.current = false;
   };
 
   const cleanupAll = () => {
