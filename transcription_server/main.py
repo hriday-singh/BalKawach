@@ -1,9 +1,17 @@
 import uvicorn
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from transcription_server.db import init_db
 from transcription_server.routes import router
 from transcription_server.worker import start_worker
+
+class EndpointFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find('GET /api/languages') == -1
+
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+
 
 app = FastAPI(title="Transcription Server")
 

@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from functools import lru_cache
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from transcription_server.db import create_job, get_job, save_final_transcript
 from transcription_server.asr import load_model, LANGUAGES
@@ -11,6 +12,7 @@ UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.get("/api/languages")
+@lru_cache(maxsize=1)
 def api_languages():
     return LANGUAGES
 
