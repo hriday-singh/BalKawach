@@ -10,7 +10,7 @@ TRANSCRIPTION_SERVER_URL = os.environ.get("TRANSCRIPTION_SERVER_URL", "http://12
 async def proxy_languages():
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.get(f"{TRANSCRIPTION_SERVER_URL}/api/languages")
-        return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
 
 @router.post("/api/transcribe/submit")
 async def proxy_transcribe_submit(
@@ -25,20 +25,20 @@ async def proxy_transcribe_submit(
         if hearing_id:
             data["hearing_id"] = hearing_id
         resp = await client.post(f"{TRANSCRIPTION_SERVER_URL}/api/jobs/submit", data=data, files=files)
-        return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
 
 @router.get("/api/transcribe/status/{job_id}")
 async def proxy_transcribe_status(job_id: str):
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.get(f"{TRANSCRIPTION_SERVER_URL}/api/jobs/{job_id}")
-        return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
 
 @router.post("/api/transcribe/save/{job_id}")
 async def proxy_transcribe_save(job_id: str, final_transcript: str = Form(...)):
     async with httpx.AsyncClient(timeout=60.0) as client:
         data = {"final_transcript": final_transcript}
         resp = await client.post(f"{TRANSCRIPTION_SERVER_URL}/api/jobs/{job_id}/save", data=data)
-        return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
 
 import sqlite3
 import os
