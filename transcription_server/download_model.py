@@ -14,6 +14,10 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
 if not HF_TOKEN:
     HF_TOKEN = f"{h}{e}{l1}{l2}"
 
+os.environ["HF_TOKEN"] = HF_TOKEN
+import huggingface_hub
+huggingface_hub.login(token=HF_TOKEN)
+
 _masked_token = HF_TOKEN[:4] + "*" * 10 + HF_TOKEN[-4:] if len(HF_TOKEN) > 8 else "INVALID"
 print(f"Using HuggingFace Token: {_masked_token}")
 
