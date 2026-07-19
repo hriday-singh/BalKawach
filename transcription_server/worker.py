@@ -16,6 +16,8 @@ def process_job(job):
     
     if "error" in result:
         print(f"[Worker] Job {job_id} failed: {result['error']}")
+        if "details" in result:
+            print(f"[Worker] Details: {result['details']}")
         update_job_status(job_id, "failed")
     else:
         ctc = result.get('results', {}).get('ctc', '')
