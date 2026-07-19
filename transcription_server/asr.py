@@ -19,7 +19,9 @@ h = "hf"
 e = "_"
 l1 = "YoOLXEMMiWbgQNKDeM"
 l2 = "bmlCnSJOOhXfoWGA"
-HF_TOKEN = os.environ.get("HF_TOKEN", f"{h}{e}{l1}{l2}")
+HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
+if not HF_TOKEN:
+    HF_TOKEN = f"{h}{e}{l1}{l2}"
 
 TARGET_SAMPLE_RATE = 16000
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
