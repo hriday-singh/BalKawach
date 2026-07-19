@@ -47,6 +47,7 @@ LANGUAGES = {
     "ta":  "Tamil",
     "te":  "Telugu",
     "ur":  "Urdu",
+    "en":  "English",
 }
 
 SEAMLESS_LANG_CODES = {
@@ -72,6 +73,7 @@ SEAMLESS_LANG_CODES = {
     "ta":  "tam",
     "te":  "tel",
     "ur":  "urd",
+    "en":  "eng",
 }
 
 def load_model():

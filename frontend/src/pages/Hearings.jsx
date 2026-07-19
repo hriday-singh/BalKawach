@@ -167,7 +167,7 @@ export default function Hearings() {
       }
     };
     const fetchLanguages = async () => {
-      const cached = sessionStorage.getItem('cachedLanguages');
+      const cached = sessionStorage.getItem('cachedLanguages_v2');
       if (cached) {
         try {
           setSupportedLanguages(JSON.parse(cached));
@@ -180,11 +180,8 @@ export default function Hearings() {
         const response = await axios.get('/api/languages');
         const langArray = Object.entries(response.data).map(([code, name]) => ({ id: code, label: name }));
         if (langArray.length > 0) {
-          const merged = [...langArray];
-          if (!merged.find(l => l.id === 'mr')) merged.push({ id: 'mr', label: 'Marathi' });
-          if (!merged.find(l => l.id === 'kn')) merged.push({ id: 'kn', label: 'Kannada' });
-          setSupportedLanguages(merged);
-          sessionStorage.setItem('cachedLanguages', JSON.stringify(merged));
+          setSupportedLanguages(langArray);
+          sessionStorage.setItem('cachedLanguages_v2', JSON.stringify(langArray));
         }
       } catch (err) {
         console.error("Error fetching languages:", err);
