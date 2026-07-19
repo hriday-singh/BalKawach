@@ -101,7 +101,24 @@ def transcribe_audio(audio_path: str, language: str = "hi", decoder: str = "both
         return {"error": "Model load failed", "details": err}
         
     try:
-        audio, orig_freq = torchaudio.load(audio_path)
+        # Robust audio loading: use ffmpeg to convert to standard WAV first
+        # This handles browser WebM uploads, MP3s, M4As, etc.
+        import subprocess
+        tmp_wav = audio_path + "_converted.wav"
+        try:
+            subprocess.run([
+                "ffmpeg", "-y", "-i", audio_path,
+                "-ar", str(TARGET_SAMPLE_RATE),
+                "-ac", "1",
+                tmp_wav
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            audio, orig_freq = torchaudio.load(tmp_wav)
+            if os.path.exists(tmp_wav):
+                os.remove(tmp_wav)
+        except Exception:
+            # Fallback to direct load if ffmpeg fails (e.g. not installed)
+            audio, orig_freq = torchaudio.load(audio_path)
+            
         if audio.shape[0] > 1:
             audio = torch.mean(audio, dim=0, keepdim=True)
             

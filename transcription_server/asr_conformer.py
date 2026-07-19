@@ -128,7 +128,23 @@ def load_audio_numpy(audio_path: str):
     return data, sr
 
 def prepare_audio(audio_path: str):
-    data, sr = load_audio_numpy(audio_path)
+    # Robust audio loading: use ffmpeg to convert to standard WAV first
+    import subprocess
+    import os
+    tmp_wav = audio_path + "_converted.wav"
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-i", audio_path,
+            "-ar", str(TARGET_SAMPLE_RATE),
+            "-ac", "1",
+            tmp_wav
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        data, sr = load_audio_numpy(tmp_wav)
+        if os.path.exists(tmp_wav):
+            os.remove(tmp_wav)
+    except Exception:
+        data, sr = load_audio_numpy(audio_path)
+
     wav = torch.from_numpy(data)
 
     if wav.shape[0] > 1:
