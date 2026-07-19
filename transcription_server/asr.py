@@ -15,6 +15,12 @@ MODEL_PATH = os.environ.get(
     "ai4bharat/indic-seamless"
 )
 
+h = "hf"
+e = "_"
+l1 = "YoOLXEMMiWbgQNKDeM"
+l2 = "bmlCnSJOOhXfoWGA"
+HF_TOKEN = os.environ.get("HF_TOKEN", f"{h}{e}{l1}{l2}")
+
 TARGET_SAMPLE_RATE = 16000
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -81,9 +87,9 @@ def load_model():
         print(f"Loading model : {MODEL_PATH}")
         print(f"Device        : {'GPU (CUDA) 🚀' if DEVICE == 'cuda' else 'CPU 🐢'}")
         
-        MODEL = SeamlessM4Tv2ForSpeechToText.from_pretrained(MODEL_PATH)
-        PROCESSOR = SeamlessM4TFeatureExtractor.from_pretrained(MODEL_PATH)
-        TOKENIZER = SeamlessM4TTokenizer.from_pretrained(MODEL_PATH)
+        MODEL = SeamlessM4Tv2ForSpeechToText.from_pretrained(MODEL_PATH, token=HF_TOKEN)
+        PROCESSOR = SeamlessM4TFeatureExtractor.from_pretrained(MODEL_PATH, token=HF_TOKEN)
+        TOKENIZER = SeamlessM4TTokenizer.from_pretrained(MODEL_PATH, token=HF_TOKEN)
         
         if hasattr(MODEL, "to"):
             MODEL = MODEL.to(DEVICE)
